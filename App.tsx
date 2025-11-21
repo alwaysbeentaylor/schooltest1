@@ -115,17 +115,18 @@ const Navbar = ({ activePage, setPage, mobileMenuOpen, setMobileMenuOpen, config
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-24">
           <div className="flex items-center cursor-pointer gap-4" onClick={() => setPage('home')}>
-            <div className="flex items-center justify-center h-16 w-16 bg-gray-50 rounded-lg overflow-hidden border border-gray-100">
+            <div className="flex items-center justify-center h-16 w-16 bg-gray-50 rounded-lg overflow-hidden border border-gray-100 relative">
                 <img 
                     src="https://via.placeholder.com/150x150.png?text=Logo" 
                     alt="Logo" 
-                    className="h-full w-full object-contain"
+                    className="h-full w-full object-contain relative z-10"
                     onError={(e) => {
                         e.currentTarget.style.display = 'none';
-                        e.currentTarget.nextElementSibling!.classList.remove('hidden');
+                        const sibling = e.currentTarget.nextElementSibling;
+                        if (sibling) sibling.classList.remove('hidden');
                     }}
                 />
-                <div className="hidden h-full w-full flex items-center justify-center text-school-red">
+                <div className="hidden absolute inset-0 flex items-center justify-center text-school-red bg-gray-50 z-0">
                     <School size={32} />
                 </div>
             </div>

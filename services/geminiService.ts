@@ -1,19 +1,27 @@
 import { GoogleGenAI } from "@google/genai";
 import { ChatMessage } from "../types";
 
-// Initialize Gemini
+// Initialize Gemini Safely
 const getAI = () => {
     try {
-        return new GoogleGenAI({ apiKey: process.env.API_KEY });
+        // Veiligheidscheck: controleer of process.env bestaat voordat we het aanroepen
+        // Dit voorkomt de "White Screen of Death" in browsers waar process niet gedefinieerd is.
+        const apiKey = (typeof process !== 'undefined' && process.env) ? process.env.API_KEY : '';
+        
+        if (!apiKey) {
+            console.warn("API Key ontbreekt of process.env is niet beschikbaar.");
+            return null;
+        }
+        return new GoogleGenAI({ apiKey });
     } catch (e) {
-        console.error("API Key missing");
+        console.error("Error initializing AI:", e);
         return null;
     }
 }
 
 export const generateNewsContent = async (prompt: string): Promise<string> => {
   const ai = getAI();
-  if (!ai) return "AI configuratie ontbreekt.";
+  if (!ai) return "AI configuratie ontbreekt of API key niet gevonden. Controleer je .env settings.";
 
   try {
     const response = await ai.models.generateContent({
@@ -30,7 +38,7 @@ export const generateNewsContent = async (prompt: string): Promise<string> => {
 
 export const generateChatResponse = async (history: ChatMessage[], userMessage: string): Promise<string> => {
     const ai = getAI();
-    if (!ai) return "Excuses, ik ben even niet bereikbaar.";
+    if (!ai) return "Excuses, ik ben even niet bereikbaar (API Config Error).";
 
     try {
         // Create a simple context for the bot
