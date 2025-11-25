@@ -10,6 +10,13 @@ export const DEFAULT_CONFIG: SiteConfig = {
   contactEmail: 'info@vrijebasisschoolsijsele.be'
 };
 
+// Hero carousel images - rotates automatically
+export const HERO_IMAGES = [
+  '/images/hero/school-main.jpeg',
+  '/images/hero/school-building.jpeg',
+  '/images/hero/school-kids.jpeg'
+];
+
 export const MOCK_NEWS: NewsItem[] = [
   {
     id: '1',
@@ -17,7 +24,7 @@ export const MOCK_NEWS: NewsItem[] = [
     content: 'Wat hebben we genoten van de massale opkomst. De kleuters hebben hun beste beentje voorgezet. Bekijk zeker de foto\'s in het album.',
     date: '2023-10-15',
     expiryDate: '2024-01-01',
-    imageUrl: '/images/news/Bibliotheek - 1 van 1 (13).jpeg',
+    imageUrl: '/images/news/bibliotheek-13.jpeg',
     category: 'Kleuter'
   },
   {
@@ -26,7 +33,7 @@ export const MOCK_NEWS: NewsItem[] = [
     content: 'De inschrijvingen starten binnenkort. Vergeet niet uw afspraak te maken voor een rondleiding.',
     date: '2023-11-01',
     expiryDate: '2024-09-01',
-    imageUrl: '/images/news/Bibliotheek - 1 van 1 (15).jpeg',
+    imageUrl: '/images/news/bibliotheek-15.jpeg',
     category: 'Algemeen'
   },
   {
@@ -35,7 +42,7 @@ export const MOCK_NEWS: NewsItem[] = [
     content: 'Met laarzen aan trokken we het bos in. We leerden over paddenstoelen en bladeren.',
     date: '2023-10-20',
     expiryDate: '2023-11-20',
-    imageUrl: '/images/news/Bibliotheek - 1 van 1 (17).jpeg',
+    imageUrl: '/images/news/bibliotheek-17.jpeg',
     category: 'Lager'
   }
 ];
@@ -51,22 +58,22 @@ export const MOCK_ALBUMS: PhotoAlbum[] = [
     id: '1',
     location: 'Kleuter Klooster',
     title: 'Spelen in de herfstzon',
-    coverImage: '/images/gallery/Bibliotheek - 1 van 1 (1).jpeg',
+    coverImage: '/images/gallery/bibliotheek-1.jpeg',
     images: [
-      '/images/gallery/Bibliotheek - 1 van 1 (1).jpeg',
-      '/images/gallery/Bibliotheek - 1 van 1 (3).jpeg',
-      '/images/gallery/Bibliotheek - 1 van 1 (5).jpeg'
+      '/images/gallery/bibliotheek-1.jpeg',
+      '/images/gallery/bibliotheek-3.jpeg',
+      '/images/gallery/bibliotheek-5.jpeg'
     ]
   },
   {
     id: '2',
     location: 'Lager',
     title: 'Activiteiten 2023',
-    coverImage: '/images/gallery/Bibliotheek - 1 van 1 (7).jpeg',
+    coverImage: '/images/gallery/bibliotheek-7.jpeg',
     images: [
-      '/images/gallery/Bibliotheek - 1 van 1 (7).jpeg',
-      '/images/gallery/Bibliotheek - 1 van 1 (9).jpeg',
-      '/images/gallery/Bibliotheek - 1 van 1 (11).jpeg'
+      '/images/gallery/bibliotheek-7.jpeg',
+      '/images/gallery/bibliotheek-9.jpeg',
+      '/images/gallery/bibliotheek-11.jpeg'
     ]
   }
 ];
