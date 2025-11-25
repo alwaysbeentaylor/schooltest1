@@ -1,46 +1,67 @@
 <!DOCTYPE html>
 <html lang="nl">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="https://lucide.dev/icons/school.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vrije Basisschool Sint-Maarten</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            fontFamily: {
-              sans: ['Inter', 'sans-serif'],
-              display: ['Fredoka', 'sans-serif'],
+
+<head>
+  <meta charset="UTF-8" />
+  <link rel="icon" type="image/svg+xml" href="https://lucide.dev/icons/school.svg" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vrije Basisschool Sint-Maarten</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fredoka:wght@400;600&display=swap"
+    rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Fredoka', 'sans-serif'],
+          },
+          colors: {
+            school: {
+              red: '#dc2626',
+              green: '#16a34a',
+              orange: '#f97316',
+              dark: '#1f2937',
+              light: '#f3f4f6',
+< !DOCTYPE html>
+            <html lang="nl">
+              <head>
+                <meta charset="UTF-8" />
+                <link rel="icon" type="image/svg+xml" href="https://lucide.dev/icons/school.svg" />
+                <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+                <title>Vrije Basisschool Sint-Maarten</title>
+                <script src="https://cdn.tailwindcss.com"></script>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fredoka:wght@400;600&display=swap"
+    rel="stylesheet">
+  <script>
+                    tailwind.config = {
+                      theme: {
+                      extend: {
+                      fontFamily: {
+                      sans: ['Inter', 'sans-serif'],
+                    display: ['Fredoka', 'sans-serif'],
             },
-            colors: {
-              school: {
-                red: '#dc2626',
-                green: '#16a34a',
-                orange: '#f97316',
-                dark: '#1f2937',
-                light: '#f3f4f6',
+                    colors: {
+                      school: {
+                      red: '#dc2626',
+                    green: '#16a34a',
+                    orange: '#f97316',
+                    dark: '#1f2937',
+                    light: '#f3f4f6',
               }
             }
           }
         }
       }
-    </script>
-  <script type="importmap">
-{
-  "imports": {
-    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.554.0",
-    "react/": "https://aistudiocdn.com/react@^19.2.0/",
-    "react": "https://aistudiocdn.com/react@^19.2.0",
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/"
-  }
-}
-</script>
+  </script>
 </head>
-  <body>
-    <div id="root"></div>
-  </body>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/index.tsx"></script>
+</body>
+
 </html>
