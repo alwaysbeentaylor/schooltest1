@@ -67,6 +67,16 @@ export const MOCK_ALBUMS: PhotoAlbum[] = [
   },
   {
     id: '2',
+    location: 'Kleuter Klooster',
+    title: 'Creatieve Workshops',
+    coverImage: '/images/gallery/bibliotheek-3.jpeg',
+    images: [
+      '/images/gallery/bibliotheek-3.jpeg',
+      '/images/gallery/bibliotheek-5.jpeg'
+    ]
+  },
+  {
+    id: '3',
     location: 'Lager',
     title: 'Activiteiten 2023',
     coverImage: '/images/gallery/bibliotheek-7.jpeg',
@@ -74,6 +84,37 @@ export const MOCK_ALBUMS: PhotoAlbum[] = [
       '/images/gallery/bibliotheek-7.jpeg',
       '/images/gallery/bibliotheek-9.jpeg',
       '/images/gallery/bibliotheek-11.jpeg'
+    ]
+  },
+  {
+    id: '4',
+    location: 'Lager',
+    title: 'Sportdag',
+    coverImage: '/images/gallery/bibliotheek-9.jpeg',
+    images: [
+      '/images/gallery/bibliotheek-9.jpeg',
+      '/images/gallery/bibliotheek-11.jpeg'
+    ]
+  },
+  {
+    id: '5',
+    location: 'Verrekijker',
+    title: 'Ontdekkingstocht',
+    coverImage: '/images/gallery/bibliotheek-1.jpeg',
+    images: [
+      '/images/gallery/bibliotheek-1.jpeg',
+      '/images/gallery/bibliotheek-7.jpeg'
+    ]
+  },
+  {
+    id: '6',
+    location: 'Algemeen',
+    title: 'Schoolfeest 2023',
+    coverImage: '/images/gallery/bibliotheek-11.jpeg',
+    images: [
+      '/images/gallery/bibliotheek-11.jpeg',
+      '/images/gallery/bibliotheek-1.jpeg',
+      '/images/gallery/bibliotheek-7.jpeg'
     ]
   }
 ];

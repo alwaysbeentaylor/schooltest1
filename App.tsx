@@ -7,8 +7,9 @@ import {
   MessageCircle, Send, Settings, FileText, Inbox
 } from 'lucide-react';
 import { generateNewsContent, generateChatResponse } from './services/geminiService';
-import { MOCK_NEWS, MOCK_EVENTS, MOCK_ALBUMS, MOCK_TEAM, DEFAULT_CONFIG, MOCK_SUBMISSIONS, INITIAL_CHAT_MESSAGES } from './constants';
+import { MOCK_NEWS, MOCK_EVENTS, MOCK_ALBUMS, MOCK_TEAM, DEFAULT_CONFIG, MOCK_SUBMISSIONS, INITIAL_CHAT_MESSAGES, HERO_IMAGES } from './constants';
 import { NewsItem, CalendarEvent, PhotoAlbum, PageView, Teacher, SiteConfig, FormSubmission, ChatMessage } from './types';
+import { HeroCarousel, ParentsPage, GalleryPage } from './NewComponents';
 
 // --- UTILS ---
 const addToGoogleCalendar = (event: CalendarEvent) => {
@@ -106,6 +107,7 @@ const Navbar = ({ activePage, setPage, mobileMenuOpen, setMobileMenuOpen, config
     { id: 'news', label: 'Nieuws' },
     { id: 'calendar', label: 'Agenda' },
     { id: 'info', label: 'Info' },
+    { id: 'ouderwerkgroep', label: 'Ouderwerkgroep' },
     { id: 'gallery', label: 'Foto\'s' },
     { id: 'contact', label: 'Contact' },
   ];
@@ -224,6 +226,8 @@ const Footer = ({ setPage }: any) => (
           <li><button onClick={() => setPage('calendar')} className="hover:text-white hover:underline">Kalender</button></li>
           <li><button onClick={() => setPage('info')} className="hover:text-white hover:underline">Menu (Hanssens)</button></li>
           <li><button onClick={() => setPage('enroll')} className="hover:text-white hover:underline">Inschrijven</button></li>
+          <li><button onClick={() => setPage('ouderwerkgroep')} className="hover:text-white hover:underline">Ouderwerkgroep</button></li>
+          <li><button onClick={() => setPage('gallery')} className="hover:text-white hover:underline">Fotogalerij</button></li>
         </ul>
       </div>
       <div>
@@ -249,13 +253,8 @@ const HomePage = ({ news, setPage, config }: { news: NewsItem[], setPage: (p: Pa
   <div className="animate-fade-in">
     {/* Hero Section */}
     <div className="relative h-[600px] w-full overflow-hidden group">
-      <img 
-        src={config.homeHeroImage} 
-        alt="Hero" 
-        className="w-full h-full object-cover transition-transform duration-1000"
-        style={{ objectPosition: config.homeHeroPosition }}
-      />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-8 md:p-20">
+      <HeroCarousel images={HERO_IMAGES} />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-8 md:p-20 z-10">
         <div className="max-w-5xl">
           <div className="flex gap-2 mb-6">
               <span className="bg-school-green text-white px-4 py-1 rounded-full text-sm font-bold uppercase tracking-wide shadow-md">
@@ -287,7 +286,7 @@ const HomePage = ({ news, setPage, config }: { news: NewsItem[], setPage: (p: Pa
     </div>
 
     {/* Quick Links */}
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-0">
       <div className="bg-school-orange p-10 text-white flex flex-col items-center text-center hover:bg-orange-600 transition cursor-pointer group" onClick={() => setPage('calendar')}>
         <div className="bg-white/20 p-4 rounded-full mb-4 group-hover:scale-110 transition"><Calendar size={40} /></div>
         <h3 className="font-display text-2xl font-bold">Kalender</h3>
@@ -302,6 +301,11 @@ const HomePage = ({ news, setPage, config }: { news: NewsItem[], setPage: (p: Pa
         <div className="bg-white/20 p-4 rounded-full mb-4 group-hover:scale-110 transition"><Star size={40} /></div>
         <h3 className="font-display text-2xl font-bold">Belevingsbox</h3>
         <p className="text-white/90 mt-2">Vraag jouw gratis doos aan!</p>
+      </div>
+      <div className="bg-school-dark p-10 text-white flex flex-col items-center text-center hover:bg-gray-700 transition cursor-pointer group" onClick={() => setPage('ouderwerkgroep')}>
+        <div className="bg-white/20 p-4 rounded-full mb-4 group-hover:scale-110 transition"><Users size={40} /></div>
+        <h3 className="font-display text-2xl font-bold">Ouderwerkgroep</h3>
+        <p className="text-white/90 mt-2">Doe mee en help mee!</p>
       </div>
     </div>
 
@@ -494,7 +498,7 @@ const InfoPage = ({ config }: { config: SiteConfig }) => (
 const AdminPanel = ({ news, setNews, events, setEvents, config, setConfig, submissions }: any) => {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [password, setPassword] = useState('');
-    const [activeTab, setActiveTab] = useState<'news' | 'events' | 'pages' | 'inbox'>('news');
+    const [activeTab, setActiveTab] = useState<'news' | 'events' | 'pages' | 'inbox' | 'photos'>('news');
     
     // Editor States
     const [newsTitle, setNewsTitle] = useState('');
@@ -563,6 +567,7 @@ const AdminPanel = ({ news, setNews, events, setEvents, config, setConfig, submi
                             {id: 'news', icon: <FileText size={18}/>, label: 'Nieuws'},
                             {id: 'events', icon: <Calendar size={18}/>, label: 'Kalender'},
                             {id: 'pages', icon: <Settings size={18}/>, label: 'Pagina\'s & Menu'},
+                            {id: 'photos', icon: <ImageIcon size={18}/>, label: 'Foto Beheer'},
                             {id: 'inbox', icon: <Inbox size={18}/>, label: 'Inbox', count: submissions.length}
                         ].map(tab => (
                             <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={`w-full flex items-center justify-between p-4 rounded-xl font-medium transition ${activeTab === tab.id ? 'bg-white text-school-red shadow border-l-4 border-school-red' : 'text-gray-600 hover:bg-white'}`}>
@@ -656,6 +661,97 @@ const AdminPanel = ({ news, setNews, events, setEvents, config, setConfig, submi
                             </div>
                         )}
 
+                        {activeTab === 'photos' && (
+                            <div className="bg-white p-8 rounded-2xl shadow-sm">
+                                <h2 className="text-xl font-bold mb-6">Foto Beheer</h2>
+
+                                <div className="bg-gradient-to-r from-school-orange to-school-red p-6 rounded-xl text-white mb-8">
+                                    <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
+                                        <ImageIcon size={20} />
+                                        Upload Nieuwe Foto's
+                                    </h3>
+                                    <p className="text-white/90 text-sm mb-4">
+                                        Selecteer foto's om te uploaden naar de galerij. Ondersteunde formaten: JPG, PNG, GIF
+                                    </p>
+                                    <div className="border-2 border-dashed border-white/50 rounded-lg p-8 text-center hover:border-white hover:bg-white/10 transition cursor-pointer">
+                                        <input
+                                            type="file"
+                                            multiple
+                                            accept="image/*"
+                                            className="hidden"
+                                            id="photo-upload"
+                                            onChange={(e) => {
+                                                if (e.target.files?.length) {
+                                                    alert(`${e.target.files.length} foto's geselecteerd. Upload functionaliteit komt binnenkort!`);
+                                                }
+                                            }}
+                                        />
+                                        <label htmlFor="photo-upload" className="cursor-pointer">
+                                            <Plus size={48} className="mx-auto mb-3 opacity-75" />
+                                            <p className="font-bold mb-1">Klik om foto's te selecteren</p>
+                                            <p className="text-sm text-white/75">Of sleep ze hierheen</p>
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-6">
+                                    <div>
+                                        <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                                            <Camera size={20} className="text-school-green" />
+                                            Huidige Albums
+                                        </h3>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <div className="border rounded-lg p-4 hover:shadow-md transition">
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <div>
+                                                        <h4 className="font-bold">Kleuter Klooster</h4>
+                                                        <p className="text-sm text-gray-500">2 albums</p>
+                                                    </div>
+                                                    <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Actief</span>
+                                                </div>
+                                            </div>
+                                            <div className="border rounded-lg p-4 hover:shadow-md transition">
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <div>
+                                                        <h4 className="font-bold">Lager</h4>
+                                                        <p className="text-sm text-gray-500">2 albums</p>
+                                                    </div>
+                                                    <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Actief</span>
+                                                </div>
+                                            </div>
+                                            <div className="border rounded-lg p-4 hover:shadow-md transition">
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <div>
+                                                        <h4 className="font-bold">Verrekijker</h4>
+                                                        <p className="text-sm text-gray-500">1 album</p>
+                                                    </div>
+                                                    <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Actief</span>
+                                                </div>
+                                            </div>
+                                            <div className="border rounded-lg p-4 hover:shadow-md transition">
+                                                <div className="flex justify-between items-start mb-2">
+                                                    <div>
+                                                        <h4 className="font-bold">Algemeen</h4>
+                                                        <p className="text-sm text-gray-500">1 album</p>
+                                                    </div>
+                                                    <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Actief</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+                                        <h4 className="font-bold text-blue-800 mb-1 text-sm">Foto Beheer Tips</h4>
+                                        <ul className="text-sm text-blue-700 space-y-1">
+                                            <li>• Upload foto's in hoge kwaliteit voor beste resultaat</li>
+                                            <li>• Organiseer foto's per locatie voor overzichtelijke galerij</li>
+                                            <li>• Verwijder oude foto's regelmatig om opslagruimte te besparen</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                         {activeTab === 'inbox' && (
                             <div className="bg-white p-8 rounded-2xl shadow-sm">
                                 <h2 className="text-xl font-bold mb-6">Ingezonden Formulieren</h2>
@@ -685,13 +781,14 @@ const AdminPanel = ({ news, setNews, events, setEvents, config, setConfig, submi
 function App() {
   const [page, setPage] = useState<PageView>('home');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  
+  const [largeText, setLargeText] = useState(false);
+
   // Central State (Simulated Database)
   const [config, setConfig] = useState<SiteConfig>(DEFAULT_CONFIG);
   const [news, setNews] = useState<NewsItem[]>(MOCK_NEWS);
   const [events, setEvents] = useState<CalendarEvent[]>(MOCK_EVENTS);
   const [submissions, setSubmissions] = useState<FormSubmission[]>(MOCK_SUBMISSIONS);
-  
+
   const [team] = useState<Teacher[]>(MOCK_TEAM);
   const [albums] = useState<PhotoAlbum[]>(MOCK_ALBUMS);
 
@@ -709,8 +806,17 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen bg-white font-sans text-gray-800 flex flex-col">
+    <div className={`min-h-screen bg-white font-sans text-gray-800 flex flex-col ${largeText ? 'text-lg' : ''}`}>
       <Navbar activePage={page} setPage={setPage} mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} config={config} />
+
+      {/* Accessibility Button - Large Text Toggle */}
+      <button
+        onClick={() => setLargeText(!largeText)}
+        className="fixed left-6 bottom-6 z-50 bg-school-dark text-white p-4 rounded-full shadow-2xl hover:scale-110 transition duration-300 flex items-center gap-2"
+        title={largeText ? 'Normaal lettertype' : 'Groot lettertype'}
+      >
+        <span className={`font-bold ${largeText ? 'text-2xl' : 'text-base'}`}>A</span>
+      </button>
       
       <main className="flex-grow">
         {page === 'home' && <HomePage news={activeNews} setPage={setPage} config={config} />}
@@ -735,9 +841,242 @@ function App() {
         )}
         {page === 'calendar' && <CalendarPage events={events} />}
         {page === 'info' && <InfoPage config={config} />}
-        {page === 'gallery' && <div className="p-20 text-center text-gray-500">Galerij module (zelfde als vorige versie)</div>}
-        {page === 'contact' && <div className="p-20 text-center text-gray-500">Contact (zie Info pagina)</div>}
-        {page === 'box' && <div className="p-20 text-center font-bold text-2xl text-school-orange">De Belevingsbox!</div>}
+        {page === 'ouderwerkgroep' && <ParentsPage />}
+        {page === 'gallery' && <GalleryPage albums={albums} />}
+        {page === 'contact' && (
+          <div className="max-w-5xl mx-auto px-4 py-16 animate-fade-in">
+            <div className="text-center mb-12">
+              <h1 className="text-5xl font-display font-bold text-school-dark mb-6">Contact</h1>
+              <p className="text-xl text-gray-600">Neem gerust contact met ons op</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+              {/* Contact Info */}
+              <div className="space-y-8">
+                <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
+                  <h2 className="text-2xl font-bold mb-6 text-gray-900">Bereikbaarheid</h2>
+                  <div className="space-y-5">
+                    <div className="flex items-start gap-4">
+                      <div className="bg-school-green/10 p-3 rounded-full flex-shrink-0">
+                        <MapPin className="text-school-green" size={24} />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-gray-900 mb-1">Adres</h3>
+                        <p className="text-gray-600">Kloosterstraat 1</p>
+                        <p className="text-gray-600">8340 Sijsele (Damme)</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-4">
+                      <div className="bg-school-orange/10 p-3 rounded-full flex-shrink-0">
+                        <Mail className="text-school-orange" size={24} />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-gray-900 mb-1">Email</h3>
+                        <a href={`mailto:${config.contactEmail}`} className="text-school-red hover:underline">
+                          {config.contactEmail}
+                        </a>
+                      </div>
+                    </div>
+
+                    <div className="flex items-start gap-4">
+                      <div className="bg-school-red/10 p-3 rounded-full flex-shrink-0">
+                        <Phone className="text-school-red" size={24} />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-gray-900 mb-1">Telefoon</h3>
+                        <a href="tel:+3250355463" className="text-school-red hover:underline">
+                          050 35 54 63
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Contact Form */}
+              <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
+                <h2 className="text-2xl font-bold mb-6 text-gray-900">Stuur een bericht</h2>
+                <form className="space-y-5" onSubmit={(e) => {
+                  e.preventDefault();
+                  alert('Bedankt voor uw bericht! We nemen spoedig contact op.');
+                  e.currentTarget.reset();
+                }}>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Naam</label>
+                    <input
+                      required
+                      type="text"
+                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green"
+                      placeholder="Uw naam"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Email</label>
+                    <input
+                      required
+                      type="email"
+                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green"
+                      placeholder="uw.email@voorbeeld.be"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Bericht</label>
+                    <textarea
+                      required
+                      rows={5}
+                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green resize-none"
+                      placeholder="Uw bericht..."
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full bg-school-green text-white font-bold py-4 rounded-lg hover:bg-green-700 transition shadow-md"
+                  >
+                    Versturen
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            {/* Map or Additional Info */}
+            <div className="mt-12 bg-gradient-to-r from-school-green to-school-dark p-8 rounded-2xl text-white">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div>
+                  <h3 className="text-2xl font-bold mb-2">Plan een bezoek</h3>
+                  <p className="text-white/90">Kom gerust langs voor een kennismaking en rondleiding</p>
+                </div>
+                <button
+                  onClick={() => setPage('enroll')}
+                  className="bg-white text-school-green font-bold px-8 py-4 rounded-xl hover:bg-gray-100 transition shadow-lg whitespace-nowrap"
+                >
+                  Maak een afspraak
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+        {page === 'box' && (
+          <div className="max-w-5xl mx-auto px-4 py-16 animate-fade-in">
+            <div className="text-center mb-12">
+              <div className="inline-block bg-school-orange/10 p-4 rounded-full mb-6">
+                <Star className="text-school-orange" size={64} />
+              </div>
+              <h1 className="text-5xl font-display font-bold text-school-dark mb-6">De Belevingsbox</h1>
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                Benieuwd naar onze school? Vraag gratis een belevingsbox aan en ontdek wat Sint-Maarten zo bijzonder maakt!
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-12">
+              {/* What's in the box */}
+              <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
+                <h2 className="text-2xl font-bold mb-6 text-school-orange flex items-center gap-3">
+                  <Star size={28} />
+                  Wat zit erin?
+                </h2>
+                <ul className="space-y-4 text-gray-700">
+                  <li className="flex items-start gap-3">
+                    <Check className="text-school-green flex-shrink-0 mt-1" size={20} />
+                    <span>Welkomstbrief van de directie</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <Check className="text-school-green flex-shrink-0 mt-1" size={20} />
+                    <span>Informatiefolder over onze school en visie</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <Check className="text-school-green flex-shrink-0 mt-1" size={20} />
+                    <span>Leuke knutsel- of spelactiviteit voor thuis</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <Check className="text-school-green flex-shrink-0 mt-1" size={20} />
+                    <span>Foto's van onze speelplaats en klassen</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <Check className="text-school-green flex-shrink-0 mt-1" size={20} />
+                    <span>Praktische info over inschrijvingen</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <Check className="text-school-green flex-shrink-0 mt-1" size={20} />
+                    <span>Een klein verrassing voor je kindje!</span>
+                  </li>
+                </ul>
+              </div>
+
+              {/* Request Form */}
+              <div className="bg-gradient-to-br from-school-orange to-school-red p-8 rounded-2xl shadow-lg text-white">
+                <h2 className="text-2xl font-bold mb-6">Vraag je box aan!</h2>
+                <form className="space-y-5" onSubmit={(e) => {
+                  e.preventDefault();
+                  addSubmission({
+                    id: Date.now().toString(),
+                    date: new Date().toISOString(),
+                    type: 'Contact',
+                    name: (e.currentTarget.elements.namedItem('name') as HTMLInputElement).value,
+                    email: (e.currentTarget.elements.namedItem('email') as HTMLInputElement).value,
+                    details: `Belevingsbox aanvraag - Adres: ${(e.currentTarget.elements.namedItem('address') as HTMLInputElement).value}`,
+                    status: 'Nieuw'
+                  });
+                  alert('Super! We sturen de belevingsbox zo snel mogelijk naar je toe!');
+                  e.currentTarget.reset();
+                }}>
+                  <div>
+                    <label className="block text-sm font-bold mb-2 text-white/90">Naam</label>
+                    <input
+                      required
+                      name="name"
+                      type="text"
+                      className="w-full p-3 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-white"
+                      placeholder="Uw naam"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold mb-2 text-white/90">Email</label>
+                    <input
+                      required
+                      name="email"
+                      type="email"
+                      className="w-full p-3 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-white"
+                      placeholder="uw.email@voorbeeld.be"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold mb-2 text-white/90">Adres (voor verzending)</label>
+                    <textarea
+                      required
+                      name="address"
+                      rows={3}
+                      className="w-full p-3 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-white resize-none"
+                      placeholder="Straat + nummer, Postcode + Gemeente"
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="w-full bg-white text-school-orange font-bold py-4 rounded-lg hover:bg-gray-100 transition shadow-lg"
+                  >
+                    Verstuur aanvraag
+                  </button>
+                </form>
+              </div>
+            </div>
+
+            {/* Additional Info */}
+            <div className="bg-blue-50 border-l-4 border-school-green p-6 rounded-r-xl">
+              <h3 className="font-bold text-school-dark mb-2 text-lg">Gratis en vrijblijvend</h3>
+              <p className="text-gray-700">
+                De belevingsbox is volledig gratis en er komt geen enkele verplichting bij kijken.
+                Het is onze manier om jullie kennis te laten maken met onze warme schoolgemeenschap.
+                Daarna beslissen jullie zelf of Sint-Maarten de juiste keuze is voor jullie gezin!
+              </p>
+            </div>
+          </div>
+        )}
       </main>
 
       <Footer setPage={setPage} />

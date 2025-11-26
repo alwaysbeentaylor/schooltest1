@@ -19,7 +19,7 @@ export interface CalendarEvent {
 
 export interface PhotoAlbum {
   id: string;
-  location: 'Verrekijker' | 'Kloosterstraat' | 'Lagere School' | 'Algemeen';
+  location: 'Verrekijker' | 'Kleuter Klooster' | 'Lager' | 'Algemeen';
   title: string;
   coverImage: string;
   images: string[];
@@ -32,18 +32,18 @@ export interface Teacher {
   group: 'Kleuter' | 'Lager' | 'Zorg' | 'Directie';
 }
 
-export type PageView = 
-  | 'home' 
-  | 'about' 
-  | 'enroll' 
-  | 'team' 
-  | 'news' 
-  | 'calendar' 
-  | 'info' 
-  | 'parents' 
-  | 'contact' 
-  | 'gallery' 
-  | 'box' 
+export type PageView =
+  | 'home'
+  | 'about'
+  | 'enroll'
+  | 'team'
+  | 'news'
+  | 'calendar'
+  | 'info'
+  | 'ouderwerkgroep'
+  | 'contact'
+  | 'gallery'
+  | 'box'
   | 'admin';
 
 export interface FormSubmission {
