@@ -17,6 +17,7 @@ app.use(express.json());
 
 // Serve static files from public folder
 app.use('/images', express.static(path.join(__dirname, '../public/images')));
+app.use('/documents', express.static(path.join(__dirname, '../public/documents')));
 
 // Data file path
 const DATA_FILE = path.join(__dirname, '../data/content.json');
@@ -35,6 +36,12 @@ imageDirs.forEach(dir => {
     fs.mkdirSync(dirPath, { recursive: true });
   }
 });
+
+// Ensure documents directory exists
+const documentsDir = path.join(__dirname, '../public/documents');
+if (!fs.existsSync(documentsDir)) {
+  fs.mkdirSync(documentsDir, { recursive: true });
+}
 
 // Initialize data file if it doesn't exist
 const initializeDataFile = () => {
@@ -60,9 +67,10 @@ const initializeDataFile = () => {
       team: [],
       ouderwerkgroep: [],
       submissions: [],
+      downloads: [],
       pages: [
         { id: 'home', name: 'Home', slug: 'home', active: true, order: 0, type: 'system' },
-        { id: 'about', name: 'Over Ons', slug: 'about', active: true, order: 1, type: 'system' },
+        { id: 'about', name: 'Onze School', slug: 'about', active: true, order: 1, type: 'system' },
         { id: 'enroll', name: 'Inschrijven', slug: 'enroll', active: true, order: 2, type: 'system' },
         { id: 'team', name: 'Team', slug: 'team', active: true, order: 3, type: 'system' },
         { id: 'news', name: 'Nieuws', slug: 'news', active: true, order: 4, type: 'system' },
@@ -703,6 +711,94 @@ app.post('/api/upload/:category', upload.single('image'), (req, res) => {
     res.json({ success: true, path: imagePath });
   } catch (error) {
     res.status(500).json({ error: 'Fout bij uploaden afbeelding' });
+  }
+});
+
+// ============ DOCUMENT UPLOAD CONFIG ============
+const documentStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadPath = path.join(__dirname, '../public/documents');
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, uniqueSuffix + ext);
+  }
+});
+
+const documentUpload = multer({
+  storage: documentStorage,
+  limits: { fileSize: 20 * 1024 * 1024 }, // 20MB limit for documents
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /pdf|doc|docx|xls|xlsx|ppt|pptx|ics/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    if (extname) {
+      cb(null, true);
+    } else {
+      cb(new Error('Alleen documenten (PDF, Word, Excel, PowerPoint, ICS) zijn toegestaan!'));
+    }
+  }
+});
+
+// ============ DOWNLOADS ROUTES ============
+app.get('/api/downloads', (req, res) => {
+  try {
+    const data = readData();
+    res.json(data.downloads || []);
+  } catch (error) {
+    res.status(500).json({ error: 'Fout bij ophalen downloads' });
+  }
+});
+
+app.post('/api/downloads', documentUpload.single('document'), (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'Geen bestand geüpload' });
+    }
+    const data = readData();
+    if (!data.downloads) data.downloads = [];
+    
+    const newDownload = {
+      id: Date.now().toString(),
+      title: req.body.title || req.file.originalname,
+      filename: req.file.filename,
+      originalName: req.file.originalname,
+      uploadDate: new Date().toISOString().split('T')[0]
+    };
+    
+    data.downloads.push(newDownload);
+    writeData(data);
+    res.json({ success: true, item: newDownload });
+  } catch (error) {
+    res.status(500).json({ error: 'Fout bij uploaden document' });
+  }
+});
+
+app.delete('/api/downloads/:id', (req, res) => {
+  try {
+    const data = readData();
+    if (!data.downloads) data.downloads = [];
+    
+    const index = data.downloads.findIndex(d => d.id === req.params.id);
+    if (index !== -1) {
+      const download = data.downloads[index];
+      // Delete file from disk
+      const fullPath = path.join(__dirname, '../public/documents', download.filename);
+      if (fs.existsSync(fullPath)) {
+        fs.unlinkSync(fullPath);
+      }
+      data.downloads.splice(index, 1);
+      writeData(data);
+      res.json({ success: true });
+    } else {
+      res.status(404).json({ error: 'Document niet gevonden' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Fout bij verwijderen document' });
   }
 });
 

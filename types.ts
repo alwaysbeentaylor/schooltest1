@@ -74,3 +74,22 @@ export interface ChatMessage {
   text: string;
   timestamp: Date;
 }
+
+export interface OuderwerkgroepActivity {
+  id: string;
+  title: string;
+  description: string;
+  images: string[]; // Multiple photos per activity
+}
+
+export interface PageConfig {
+  id: string;
+  name: string;
+  slug: string;
+  active: boolean;
+  order: number;
+  type: 'system' | 'custom';
+  // Content fields for custom pages
+  content?: string;
+  pageImages?: string[];
+}

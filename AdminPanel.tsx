@@ -52,7 +52,7 @@ interface OuderwerkgroepActivity {
   id: string;
   title: string;
   description: string;
-  image: string;
+  images: string[]; // Multiple photos per activity
 }
 
 interface FormSubmission {
@@ -63,6 +63,14 @@ interface FormSubmission {
   email?: string;
   details: string;
   status: 'Nieuw' | 'Gelezen';
+}
+
+interface Download {
+  id: string;
+  title: string;
+  filename: string;
+  originalName?: string;
+  uploadDate: string;
 }
 
 interface SiteConfig {
@@ -82,6 +90,8 @@ interface PageConfig {
   active: boolean;
   order: number;
   type: 'system' | 'custom';
+  content?: string;
+  pageImages?: string[];
 }
 
 // School Colors - Green, Red, White
@@ -106,12 +116,12 @@ const SCHOOL_COLORS = {
   }
 };
 
-// Colorful Button Component with School Colors
+// Colorful Button Component with School Colors - Smaller default size for older users
 const ColorButton = ({ 
   children, 
   onClick, 
   color = 'green', 
-  size = 'md',
+  size = 'sm',  // Default to small for compact UI
   disabled = false,
   icon,
   className = ''
@@ -133,18 +143,18 @@ const ColorButton = ({
   
   const sizes = {
     sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2.5 text-base',
-    lg: 'px-6 py-3 text-lg'
+    md: 'px-4 py-2 text-sm',
+    lg: 'px-5 py-2.5 text-base'
   };
 
   return (
     <button
       onClick={onClick}
       disabled={disabled}
-      className={`${colors[color]} ${sizes[size]} font-bold rounded-xl shadow-lg 
-        transform transition-all duration-200 hover:scale-105 hover:shadow-xl
+      className={`${colors[color]} ${sizes[size]} font-bold rounded-xl shadow-md 
+        transform transition-all duration-200 hover:scale-105 hover:shadow-lg
         disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none
-        flex items-center gap-2 justify-center ${className}`}
+        flex items-center gap-1.5 justify-center ${className}`}
     >
       {icon}
       {children}
@@ -153,16 +163,16 @@ const ColorButton = ({
 };
 
 // Colorful Card Component with School Colors
-const ColorCard = ({ 
-  children, 
-  color = 'white',
-  className = '',
-  onClick
-}: {
+const ColorCard: React.FC<{
   children: React.ReactNode;
   color?: 'white' | 'green' | 'red' | 'gray';
   className?: string;
   onClick?: () => void;
+}> = ({ 
+  children, 
+  color = 'white',
+  className = '',
+  onClick
 }) => {
   const colors = {
     white: 'bg-white border-gray-100',
@@ -373,10 +383,221 @@ const Toast = ({ message, type, onClose }: { message: string; type: 'success' | 
   );
 };
 
+// Calendar Section Component with Search, Filters, and Pagination
+const CalendarSection = ({
+  events,
+  onAddEvent,
+  onDeleteEvent
+}: {
+  events: CalendarEvent[];
+  onAddEvent: () => void;
+  onDeleteEvent: (id: string) => void;
+}) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState<string>('all');
+  const [selectedType, setSelectedType] = useState<string>('all');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  // Get unique months from events
+  const availableMonths = Array.from(new Set(
+    events.map(e => {
+      const date = new Date(e.date);
+      return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    })
+  )).sort();
+
+  const monthNames = ['Januari', 'Februari', 'Maart', 'April', 'Mei', 'Juni', 'Juli', 'Augustus', 'September', 'Oktober', 'November', 'December'];
+
+  // Filter and sort events
+  const filteredEvents = events
+    .filter(event => {
+      const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           (event.description?.toLowerCase().includes(searchTerm.toLowerCase()) ?? false);
+      const matchesMonth = selectedMonth === 'all' || 
+        `${new Date(event.date).getFullYear()}-${String(new Date(event.date).getMonth() + 1).padStart(2, '0')}` === selectedMonth;
+      const matchesType = selectedType === 'all' || event.type === selectedType;
+      return matchesSearch && matchesMonth && matchesType;
+    })
+    .sort((a, b) => {
+      const dateA = new Date(a.date).getTime();
+      const dateB = new Date(b.date).getTime();
+      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA;
+    });
+
+  // Pagination
+  const totalPages = Math.ceil(filteredEvents.length / itemsPerPage);
+  const paginatedEvents = filteredEvents.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedMonth, selectedType, sortOrder]);
+
+  return (
+    <div className="space-y-4 md:space-y-6 animate-fade-in">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-800">📅 Kalender Beheer</h2>
+          <p className="text-gray-500 text-sm md:text-base">
+            {filteredEvents.length} evenement{filteredEvents.length !== 1 ? 'en' : ''} gevonden
+          </p>
+        </div>
+        <ColorButton color="red" size="sm" icon={<Plus size={18} />} onClick={onAddEvent}>
+          Nieuw
+        </ColorButton>
+      </div>
+
+      {/* Filters */}
+      <ColorCard>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {/* Search */}
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="🔍 Zoeken..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-4 pr-4 py-2 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:outline-none text-sm"
+            />
+          </div>
+
+          {/* Month Filter */}
+          <select
+            value={selectedMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:outline-none text-sm bg-white"
+          >
+            <option value="all">📆 Alle maanden</option>
+            {availableMonths.map(month => {
+              const [year, m] = month.split('-');
+              return (
+                <option key={month} value={month}>
+                  {monthNames[parseInt(m) - 1]} {year}
+                </option>
+              );
+            })}
+          </select>
+
+          {/* Type Filter */}
+          <select
+            value={selectedType}
+            onChange={(e) => setSelectedType(e.target.value)}
+            className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:outline-none text-sm bg-white"
+          >
+            <option value="all">🏷️ Alle types</option>
+            <option value="Vakantie">🌴 Vakantie</option>
+            <option value="Activiteit">🎉 Activiteit</option>
+            <option value="Vrije Dag">🏠 Vrije Dag</option>
+          </select>
+
+          {/* Sort Order */}
+          <select
+            value={sortOrder}
+            onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}
+            className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:outline-none text-sm bg-white"
+          >
+            <option value="asc">📈 Datum oplopend</option>
+            <option value="desc">📉 Datum aflopend</option>
+          </select>
+        </div>
+      </ColorCard>
+
+      {/* Events List */}
+      <ColorCard>
+        {paginatedEvents.length === 0 ? (
+          <div className="text-center py-8">
+            <Calendar size={48} className="mx-auto text-gray-300 mb-4" />
+            <p className="text-gray-500">Geen evenementen gevonden</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {paginatedEvents.map((event) => (
+              <div key={event.id} className="flex items-center gap-3 md:gap-4 p-3 md:p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition group">
+                <div className={`p-2 md:p-3 rounded-xl text-white font-bold text-center min-w-[50px] md:min-w-[60px]
+                  ${event.type === 'Vakantie' ? 'bg-gradient-to-br from-emerald-500 to-green-600' :
+                    event.type === 'Activiteit' ? 'bg-gradient-to-br from-red-500 to-rose-600' :
+                    'bg-gradient-to-br from-orange-500 to-amber-600'}`}>
+                  <div className="text-base md:text-xl">{new Date(event.date).getDate()}</div>
+                  <div className="text-[10px] uppercase">{new Date(event.date).toLocaleDateString('nl-BE', { month: 'short' })}</div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-gray-800 text-sm md:text-base truncate">{event.title}</h3>
+                  <p className="text-gray-500 text-xs truncate">{event.description}</p>
+                  <span className={`inline-block mt-1 px-2 py-0.5 rounded-full text-xs font-bold
+                    ${event.type === 'Vakantie' ? 'bg-emerald-100 text-emerald-700' :
+                      event.type === 'Activiteit' ? 'bg-red-100 text-red-700' :
+                      'bg-orange-100 text-orange-700'}`}>
+                    {event.type}
+                  </span>
+                </div>
+                <button onClick={() => onDeleteEvent(event.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition">
+                  <Trash2 size={18} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center gap-2 mt-6 pt-4 border-t border-gray-100">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+            >
+              ← Vorige
+            </button>
+            <div className="flex gap-1">
+              {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                let pageNum;
+                if (totalPages <= 5) {
+                  pageNum = i + 1;
+                } else if (currentPage <= 3) {
+                  pageNum = i + 1;
+                } else if (currentPage >= totalPages - 2) {
+                  pageNum = totalPages - 4 + i;
+                } else {
+                  pageNum = currentPage - 2 + i;
+                }
+                return (
+                  <button
+                    key={pageNum}
+                    onClick={() => setCurrentPage(pageNum)}
+                    className={`w-8 h-8 rounded-lg text-sm font-bold transition ${
+                      currentPage === pageNum 
+                        ? 'bg-emerald-500 text-white' 
+                        : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                    }`}
+                  >
+                    {pageNum}
+                  </button>
+                );
+              })}
+            </div>
+            <button
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="px-3 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+            >
+              Volgende →
+            </button>
+          </div>
+        )}
+      </ColorCard>
+    </div>
+  );
+};
+
 // Default Pages Configuration
 const DEFAULT_PAGES: PageConfig[] = [
   { id: 'home', name: 'Home', slug: 'home', active: true, order: 0, type: 'system' },
-  { id: 'about', name: 'Over Ons', slug: 'about', active: true, order: 1, type: 'system' },
+  { id: 'about', name: 'Onze School', slug: 'about', active: true, order: 1, type: 'system' },
   { id: 'enroll', name: 'Inschrijven', slug: 'enroll', active: true, order: 2, type: 'system' },
   { id: 'team', name: 'Team', slug: 'team', active: true, order: 3, type: 'system' },
   { id: 'news', name: 'Nieuws', slug: 'news', active: true, order: 4, type: 'system' },
@@ -406,6 +627,7 @@ export const AdminPanel = () => {
   const [ouderwerkgroep, setOuderwerkgroep] = useState<OuderwerkgroepActivity[]>([]);
   const [submissions, setSubmissions] = useState<FormSubmission[]>([]);
   const [pages, setPages] = useState<PageConfig[]>(DEFAULT_PAGES);
+  const [downloads, setDownloads] = useState<Download[]>([]);
 
   // Modal states
   const [showNewsModal, setShowNewsModal] = useState(false);
@@ -415,14 +637,16 @@ export const AdminPanel = () => {
   const [showOuderwerkgroepModal, setShowOuderwerkgroepModal] = useState(false);
   const [showPageModal, setShowPageModal] = useState(false);
   const [editingPage, setEditingPage] = useState<PageConfig | null>(null);
+  const [showDownloadModal, setShowDownloadModal] = useState(false);
 
   // Form states
   const [newsForm, setNewsForm] = useState({ title: '', content: '', date: '', expiryDate: '', imageUrl: '', category: 'Algemeen' as const });
   const [eventForm, setEventForm] = useState({ title: '', date: '', type: 'Activiteit' as const, description: '' });
   const [albumForm, setAlbumForm] = useState({ title: '', location: 'Algemeen' as const, expiryDate: '' });
   const [teamForm, setTeamForm] = useState({ role: '', imageUrl: '', group: 'Kleuter' });
-  const [ouderwerkgroepForm, setOuderwerkgroepForm] = useState({ title: '', description: '', image: '' });
-  const [pageForm, setPageForm] = useState({ name: '', slug: '' });
+  const [ouderwerkgroepForm, setOuderwerkgroepForm] = useState({ title: '', description: '', images: [] as string[] });
+  const [pageForm, setPageForm] = useState({ name: '', slug: '', content: '', pageImages: [] as string[] });
+  const [downloadForm, setDownloadForm] = useState({ title: '', file: null as File | null });
   const [isGenerating, setIsGenerating] = useState(false);
 
   // Fetch all data
@@ -439,6 +663,7 @@ export const AdminPanel = () => {
       setOuderwerkgroep(data.ouderwerkgroep || []);
       setSubmissions(data.submissions || []);
       if (data.pages) setPages(data.pages);
+      setDownloads(data.downloads || []);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching data:', error);
@@ -507,13 +732,19 @@ export const AdminPanel = () => {
 
   const handleEditPage = (page: PageConfig) => {
     setEditingPage(page);
-    setPageForm({ name: page.name, slug: page.slug });
+    setPageForm({ name: page.name, slug: page.slug, content: page.content || '', pageImages: page.pageImages || [] });
     setShowPageModal(true);
   };
 
   const handleSavePageEdit = () => {
     if (editingPage) {
-      setPages(pages.map(p => p.id === editingPage.id ? { ...p, name: pageForm.name, slug: pageForm.slug } : p));
+      setPages(pages.map(p => p.id === editingPage.id ? { 
+        ...p, 
+        name: pageForm.name, 
+        slug: pageForm.slug,
+        content: pageForm.content,
+        pageImages: pageForm.pageImages
+      } : p));
       setShowPageModal(false);
       setEditingPage(null);
       showToast('Pagina bijgewerkt!', 'success');
@@ -527,11 +758,13 @@ export const AdminPanel = () => {
       slug: pageForm.slug.toLowerCase().replace(/\s+/g, '-'),
       active: true,
       order: pages.length,
-      type: 'custom'
+      type: 'custom',
+      content: pageForm.content,
+      pageImages: pageForm.pageImages
     };
     setPages([...pages, newPage]);
     setShowPageModal(false);
-    setPageForm({ name: '', slug: '' });
+    setPageForm({ name: '', slug: '', content: '', pageImages: [] });
     showToast('Nieuwe pagina toegevoegd!', 'success');
   };
 
@@ -742,6 +975,47 @@ export const AdminPanel = () => {
     }
   };
 
+  // Download handlers
+  const handleAddDownload = async () => {
+    if (!downloadForm.file || !downloadForm.title) {
+      showToast('Vul een titel in en selecteer een bestand', 'error');
+      return;
+    }
+    
+    const formData = new FormData();
+    formData.append('document', downloadForm.file);
+    formData.append('title', downloadForm.title);
+    
+    try {
+      const response = await fetch(`${API_BASE}/downloads`, {
+        method: 'POST',
+        body: formData
+      });
+      const data = await response.json();
+      if (data.success) {
+        setDownloads([...downloads, data.item]);
+        setShowDownloadModal(false);
+        setDownloadForm({ title: '', file: null });
+        showToast('Document toegevoegd! 📄', 'success');
+      }
+    } catch (error) {
+      showToast('Fout bij uploaden document', 'error');
+    }
+  };
+
+  const handleDeleteDownload = async (id: string) => {
+    if (!confirm('Weet je zeker dat je dit document wilt verwijderen?')) return;
+    try {
+      const response = await fetch(`${API_BASE}/downloads/${id}`, { method: 'DELETE' });
+      if (response.ok) {
+        setDownloads(downloads.filter(d => d.id !== id));
+        showToast('Document verwijderd! 🗑️', 'success');
+      }
+    } catch (error) {
+      showToast('Fout bij verwijderen', 'error');
+    }
+  };
+
   const handleAIWrite = async () => {
     if (!newsForm.title) {
       showToast('Vul eerst een titel in!', 'error');
@@ -807,17 +1081,16 @@ export const AdminPanel = () => {
     );
   }
 
-  // Navigation items
+  // Navigation items - Simplified (no Team, no Pages as separate tabs)
   const navItems = [
-    { id: 'dashboard', icon: <Home size={22} />, label: 'Dashboard', color: 'from-emerald-500 to-green-600' },
-    { id: 'news', icon: <FileText size={22} />, label: 'Nieuws', color: 'from-emerald-500 to-green-600' },
-    { id: 'calendar', icon: <Calendar size={22} />, label: 'Kalender', color: 'from-red-500 to-rose-600' },
-    { id: 'gallery', icon: <Camera size={22} />, label: 'Foto\'s', color: 'from-emerald-500 to-green-600' },
-    { id: 'team', icon: <Users size={22} />, label: 'Team', color: 'from-red-500 to-rose-600' },
-    { id: 'ouderwerkgroep', icon: <Heart size={22} />, label: 'Ouderwerkgroep', color: 'from-red-500 to-rose-600' },
-    { id: 'pages', icon: <Layout size={22} />, label: 'Pagina\'s', color: 'from-emerald-500 to-green-600' },
-    { id: 'settings', icon: <Settings size={22} />, label: 'Instellingen', color: 'from-gray-500 to-gray-600' },
-    { id: 'inbox', icon: <Inbox size={22} />, label: 'Inbox', color: 'from-red-500 to-rose-600', badge: submissions.filter(s => s.status === 'Nieuw').length },
+    { id: 'dashboard', icon: <Home size={20} />, label: 'Dashboard', color: 'from-emerald-500 to-green-600' },
+    { id: 'news', icon: <FileText size={20} />, label: 'Nieuws', color: 'from-emerald-500 to-green-600' },
+    { id: 'calendar', icon: <Calendar size={20} />, label: 'Kalender', color: 'from-red-500 to-rose-600' },
+    { id: 'gallery', icon: <Camera size={20} />, label: "Foto's", color: 'from-emerald-500 to-green-600' },
+    { id: 'downloads', icon: <FileEdit size={20} />, label: 'Downloads', color: 'from-blue-500 to-indigo-600' },
+    { id: 'ouderwerkgroep', icon: <Heart size={20} />, label: 'Ouderwerkgroep', color: 'from-red-500 to-rose-600' },
+    { id: 'settings', icon: <Settings size={20} />, label: 'Instellingen', color: 'from-gray-500 to-gray-600' },
+    { id: 'inbox', icon: <Inbox size={20} />, label: 'Inbox', color: 'from-red-500 to-rose-600', badge: submissions.filter(s => s.status === 'Nieuw').length },
   ];
 
   const handleNavClick = (tabId: string) => {
@@ -1020,46 +1293,11 @@ export const AdminPanel = () => {
 
         {/* Calendar Section */}
         {activeTab === 'calendar' && (
-          <div className="space-y-4 md:space-y-6 animate-fade-in">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div>
-                <h2 className="text-2xl md:text-3xl font-bold text-gray-800">📅 Kalender Beheer</h2>
-                <p className="text-gray-500 text-sm md:text-base">Plan evenementen en activiteiten</p>
-              </div>
-              <ColorButton color="red" icon={<Plus size={20} />} onClick={() => setShowEventModal(true)}>
-                Nieuw Evenement
-              </ColorButton>
-            </div>
-
-            <ColorCard>
-              <div className="space-y-3 md:space-y-4">
-                {events.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()).map((event) => (
-                  <div key={event.id} className="flex items-center gap-3 md:gap-4 p-3 md:p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition group">
-                    <div className={`p-2 md:p-4 rounded-xl text-white font-bold text-center min-w-[50px] md:min-w-[70px]
-                      ${event.type === 'Vakantie' ? 'bg-gradient-to-br from-emerald-500 to-green-600' :
-                        event.type === 'Activiteit' ? 'bg-gradient-to-br from-red-500 to-rose-600' :
-                        'bg-gradient-to-br from-gray-500 to-gray-600'}`}>
-                      <div className="text-lg md:text-2xl">{new Date(event.date).getDate()}</div>
-                      <div className="text-xs uppercase">{new Date(event.date).toLocaleDateString('nl-BE', { month: 'short' })}</div>
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-gray-800 text-base md:text-lg truncate">{event.title}</h3>
-                      <p className="text-gray-500 text-xs md:text-sm truncate">{event.description}</p>
-                      <span className={`inline-block mt-1 md:mt-2 px-2 md:px-3 py-1 rounded-full text-xs font-bold
-                        ${event.type === 'Vakantie' ? 'bg-emerald-100 text-emerald-700' :
-                          event.type === 'Activiteit' ? 'bg-red-100 text-red-700' :
-                          'bg-gray-100 text-gray-700'}`}>
-                        {event.type}
-                      </span>
-                    </div>
-                    <button onClick={() => handleDeleteEvent(event.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition">
-                      <Trash2 size={20} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </ColorCard>
-          </div>
+          <CalendarSection 
+            events={events} 
+            onAddEvent={() => setShowEventModal(true)}
+            onDeleteEvent={handleDeleteEvent}
+          />
         )}
 
         {/* Gallery Section */}
@@ -1120,34 +1358,58 @@ export const AdminPanel = () => {
           </div>
         )}
 
-        {/* Team Section */}
-        {activeTab === 'team' && (
+        {/* Downloads Section */}
+        {activeTab === 'downloads' && (
           <div className="space-y-4 md:space-y-6 animate-fade-in">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
-                <h2 className="text-2xl md:text-3xl font-bold text-gray-800">👥 Team Beheer</h2>
-                <p className="text-gray-500 text-sm md:text-base">Beheer teamleden</p>
+                <h2 className="text-2xl md:text-3xl font-bold text-gray-800">📄 Downloads Beheer</h2>
+                <p className="text-gray-500 text-sm md:text-base">Beheer documenten voor ouders (schoolreglement, infobrochure, etc.)</p>
               </div>
-              <ColorButton color="red" icon={<Plus size={20} />} onClick={() => setShowTeamModal(true)}>
-                Nieuw Teamlid
+              <ColorButton color="green" icon={<Plus size={18} />} onClick={() => setShowDownloadModal(true)}>
+                Document Toevoegen
               </ColorButton>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
-              {team.map((member) => (
-                <ColorCard key={member.id} className="group text-center">
-                  <div className="relative mb-4">
-                    <img src={member.imageUrl} alt={member.role} className="w-20 h-20 md:w-32 md:h-32 object-cover rounded-full mx-auto shadow-lg" />
-                    <button onClick={() => handleDeleteTeamMember(member.id)} className="absolute top-0 right-1/2 translate-x-10 md:translate-x-16 p-1 md:p-2 bg-red-500 text-white rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition">
-                      <Trash2 size={12} />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+              {downloads.map((download) => (
+                <ColorCard key={download.id} className="group">
+                  <div className="flex items-start gap-4">
+                    <div className="bg-blue-100 p-4 rounded-xl">
+                      <FileText size={32} className="text-blue-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-lg text-gray-800 truncate">{download.title}</h3>
+                      <p className="text-gray-500 text-sm truncate">{download.originalName || download.filename}</p>
+                      <p className="text-gray-400 text-xs mt-1">Geüpload: {download.uploadDate}</p>
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-100">
+                    <a 
+                      href={`/documents/${download.filename}`} 
+                      target="_blank" 
+                      rel="noreferrer"
+                      className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
+                    >
+                      <ExternalLink size={14} /> Bekijken
+                    </a>
+                    <button 
+                      onClick={() => handleDeleteDownload(download.id)} 
+                      className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"
+                    >
+                      <Trash2 size={16} />
                     </button>
                   </div>
-                  <h3 className="font-bold text-gray-800 text-sm md:text-base">{member.role}</h3>
-                  <span className="inline-block mt-2 px-2 md:px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold">
-                    {member.group}
-                  </span>
                 </ColorCard>
               ))}
+              
+              {downloads.length === 0 && (
+                <div className="col-span-full text-center py-12 text-gray-400">
+                  <FileText size={48} className="mx-auto mb-4 opacity-50" />
+                  <p className="text-lg">Nog geen documenten toegevoegd</p>
+                  <p className="text-sm">Klik op "Document Toevoegen" om te beginnen</p>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -1158,9 +1420,9 @@ export const AdminPanel = () => {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <div>
                 <h2 className="text-2xl md:text-3xl font-bold text-gray-800">💖 Ouderwerkgroep</h2>
-                <p className="text-gray-500 text-sm md:text-base">Beheer activiteiten van de ouderwerkgroep</p>
+                <p className="text-gray-500 text-sm md:text-base">Beheer activiteiten met foto's</p>
               </div>
-              <ColorButton color="red" icon={<Plus size={20} />} onClick={() => setShowOuderwerkgroepModal(true)}>
+              <ColorButton color="red" icon={<Plus size={18} />} onClick={() => setShowOuderwerkgroepModal(true)}>
                 Nieuwe Activiteit
               </ColorButton>
             </div>
@@ -1168,95 +1430,86 @@ export const AdminPanel = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
               {ouderwerkgroep.map((activity) => (
                 <ColorCard key={activity.id} className="group">
+                  {/* Photo carousel preview */}
                   <div className="relative mb-4">
-                    <img src={activity.image} alt={activity.title} className="w-full h-32 md:h-40 object-cover rounded-xl" />
+                    {activity.images && activity.images.length > 0 ? (
+                      <>
+                        <img src={activity.images[0]} alt={activity.title} className="w-full h-32 md:h-40 object-cover rounded-xl" />
+                        {activity.images.length > 1 && (
+                          <span className="absolute top-2 right-2 px-2 py-1 bg-white/90 backdrop-blur rounded-full text-xs font-bold text-gray-700">
+                            +{activity.images.length - 1} foto's
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      <div className="w-full h-32 md:h-40 bg-gradient-to-br from-red-100 to-rose-100 rounded-xl flex items-center justify-center">
+                        <Camera size={32} className="text-red-300" />
+                      </div>
+                    )}
                   </div>
+                  
+                  {/* Thumbnails */}
+                  {activity.images && activity.images.length > 1 && (
+                    <div className="flex gap-1 mb-3 overflow-x-auto pb-1">
+                      {activity.images.slice(0, 5).map((img, idx) => (
+                        <img key={idx} src={img} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                      ))}
+                      {activity.images.length > 5 && (
+                        <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0 text-xs font-bold text-gray-500">
+                          +{activity.images.length - 5}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  
                   <h3 className="font-bold text-base md:text-lg text-gray-800 mb-2">{activity.title}</h3>
-                  <p className="text-gray-500 text-sm mb-4">{activity.description}</p>
+                  <p className="text-gray-500 text-sm mb-4 line-clamp-2">{activity.description}</p>
+                  
+                  {/* Add photos button */}
+                  <div className="border-2 border-dashed border-gray-200 rounded-xl p-3 text-center hover:border-red-400 hover:bg-red-50 transition cursor-pointer mb-3">
+                    <input
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      className="hidden"
+                      id={`upload-owg-${activity.id}`}
+                      onChange={async (e) => {
+                        if (!e.target.files) return;
+                        const formData = new FormData();
+                        for (let i = 0; i < e.target.files.length; i++) {
+                          formData.append('images', e.target.files[i]);
+                        }
+                        formData.append('category', 'ouderwerkgroep');
+                        try {
+                          const res = await fetch(`${API_BASE}/upload-multiple`, { method: 'POST', body: formData });
+                          const { paths } = await res.json();
+                          const newImages = [...(activity.images || []), ...paths];
+                          const updatedActivity = { ...activity, images: newImages };
+                          await fetch(`${API_BASE}/ouderwerkgroep/${activity.id}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(updatedActivity)
+                          });
+                          setOuderwerkgroep(ouderwerkgroep.map(a => a.id === activity.id ? updatedActivity : a));
+                          showToast('Foto\'s toegevoegd!', 'success');
+                        } catch (error) {
+                          showToast('Upload mislukt', 'error');
+                        }
+                      }}
+                    />
+                    <label htmlFor={`upload-owg-${activity.id}`} className="cursor-pointer">
+                      <Upload size={16} className="mx-auto text-red-400 mb-1" />
+                      <p className="text-xs text-gray-500">Foto's toevoegen</p>
+                    </label>
+                  </div>
+                  
                   <div className="flex justify-end">
-                    <button onClick={() => handleDeleteOuderwerkgroepActivity(activity.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition">
-                      <Trash2 size={18} />
+                    <button onClick={() => handleDeleteOuderwerkgroepActivity(activity.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition">
+                      <Trash2 size={16} />
                     </button>
                   </div>
                 </ColorCard>
               ))}
-            </div>
-          </div>
-        )}
-
-        {/* Pages Management Section */}
-        {activeTab === 'pages' && (
-          <div className="space-y-4 md:space-y-6 animate-fade-in">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-              <div>
-                <h2 className="text-2xl md:text-3xl font-bold text-gray-800">📄 Pagina Beheer</h2>
-                <p className="text-gray-500 text-sm md:text-base">Activeer, deactiveer of wijzig pagina's</p>
-              </div>
-              <div className="flex gap-2">
-                <ColorButton color="green" icon={<Plus size={20} />} onClick={() => { setEditingPage(null); setPageForm({ name: '', slug: '' }); setShowPageModal(true); }}>
-                  Nieuwe Pagina
-                </ColorButton>
-                <ColorButton color="white" icon={<Save size={20} />} onClick={handleSavePages}>
-                  Opslaan
-                </ColorButton>
-              </div>
-            </div>
-
-            <ColorCard>
-              <div className="space-y-2 md:space-y-3">
-                {pages.sort((a, b) => a.order - b.order).map((page) => (
-                  <div key={page.id} className="flex items-center gap-3 md:gap-4 p-3 md:p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition group">
-                    <div className="text-gray-400 cursor-move">
-                      <GripVertical size={20} />
-                    </div>
-                    
-                    <button
-                      onClick={() => handleTogglePage(page.id)}
-                      className={`p-2 rounded-lg transition ${page.active ? 'text-emerald-500 bg-emerald-100' : 'text-gray-400 bg-gray-200'}`}
-                    >
-                      {page.active ? <ToggleRight size={24} /> : <ToggleLeft size={24} />}
-                    </button>
-                    
-                    <div className="flex-1">
-                      <h3 className="font-bold text-gray-800 text-sm md:text-base">{page.name}</h3>
-                      <p className="text-xs text-gray-500">/{page.slug}</p>
-                    </div>
-                    
-                    <span className={`px-2 py-1 rounded-full text-xs font-bold ${
-                      page.type === 'system' ? 'bg-emerald-100 text-emerald-700' : 'bg-gray-100 text-gray-700'
-                    }`}>
-                      {page.type === 'system' ? 'Systeem' : 'Aangepast'}
-                    </span>
-                    
-                    <div className="flex gap-1 md:gap-2">
-                      <button 
-                        onClick={() => handleEditPage(page)} 
-                        className="p-2 text-emerald-500 hover:bg-emerald-50 rounded-lg transition"
-                      >
-                        <FileEdit size={18} />
-                      </button>
-                      {page.type === 'custom' && (
-                        <button 
-                          onClick={() => handleDeletePage(page.id)} 
-                          className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition"
-                        >
-                          <Trash2 size={18} />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </ColorCard>
-
-            <div className="bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded-r-xl">
-              <h4 className="font-bold text-emerald-800 mb-2">💡 Tips</h4>
-              <ul className="text-sm text-emerald-700 space-y-1">
-                <li>• Klik op de toggle om een pagina te activeren/deactiveren</li>
-                <li>• Gedeactiveerde pagina's verschijnen niet in het menu</li>
-                <li>• Systeempagina's kunnen niet verwijderd worden</li>
-                <li>• Klik op "Opslaan" om wijzigingen door te voeren</li>
-              </ul>
             </div>
           </div>
         )}
@@ -1298,7 +1551,7 @@ export const AdminPanel = () => {
 
               <ColorCard color="green">
                 <h3 className="text-lg md:text-xl font-bold text-emerald-800 mb-4 flex items-center gap-2">
-                  <FileText /> Over Ons
+                  <FileText /> Onze School
                 </h3>
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">Beschrijving</label>
@@ -1365,9 +1618,83 @@ export const AdminPanel = () => {
               </ColorCard>
             </div>
 
-            <ColorButton color="green" size="lg" icon={<Save size={24} />} onClick={handleSaveConfig} className="w-full sm:w-auto">
+            <ColorButton color="green" size="md" icon={<Save size={20} />} onClick={handleSaveConfig} className="w-full sm:w-auto">
               Alle Instellingen Opslaan
             </ColorButton>
+
+            {/* Custom Pages Management - Only show custom pages */}
+            <div className="mt-8 pt-8 border-t-2 border-gray-200">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                <div>
+                  <h3 className="text-xl md:text-2xl font-bold text-gray-800">📄 Extra Pagina's</h3>
+                  <p className="text-gray-500 text-sm">Maak tijdelijke pagina's voor evenementen of speciale projecten</p>
+                </div>
+                <ColorButton color="green" size="sm" icon={<Plus size={16} />} onClick={() => { 
+                  setEditingPage(null); 
+                  setPageForm({ name: '', slug: '', content: '', pageImages: [] }); 
+                  setShowPageModal(true); 
+                }}>
+                  Nieuwe Pagina
+                </ColorButton>
+              </div>
+
+              {/* Only show custom pages */}
+              {pages.filter(p => p.type === 'custom').length === 0 ? (
+                <ColorCard className="text-center py-8">
+                  <FileText size={40} className="mx-auto text-gray-300 mb-3" />
+                  <p className="text-gray-500">Geen extra pagina's</p>
+                  <p className="text-gray-400 text-sm mt-1">Klik op "Nieuwe Pagina" om er een toe te voegen</p>
+                </ColorCard>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {pages.filter(p => p.type === 'custom').map((page) => (
+                    <ColorCard key={page.id} className="group">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <h4 className="font-bold text-gray-800">{page.name}</h4>
+                          <p className="text-xs text-gray-500">/{page.slug}</p>
+                        </div>
+                        <button
+                          onClick={() => handleTogglePage(page.id)}
+                          className={`p-2 rounded-lg transition ${page.active ? 'text-emerald-500 bg-emerald-100' : 'text-gray-400 bg-gray-200'}`}
+                        >
+                          {page.active ? <Eye size={18} /> : <ToggleLeft size={18} />}
+                        </button>
+                      </div>
+                      {page.content && (
+                        <p className="text-gray-600 text-sm line-clamp-2 mb-3">{page.content}</p>
+                      )}
+                      {page.pageImages && page.pageImages.length > 0 && (
+                        <div className="flex gap-1 mb-3">
+                          {page.pageImages.slice(0, 4).map((img, idx) => (
+                            <img key={idx} src={img} alt="" className="w-10 h-10 rounded object-cover" />
+                          ))}
+                          {page.pageImages.length > 4 && (
+                            <div className="w-10 h-10 rounded bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500">
+                              +{page.pageImages.length - 4}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      <div className="flex gap-2">
+                        <button 
+                          onClick={() => handleEditPage(page)} 
+                          className="flex-1 py-2 text-emerald-600 bg-emerald-50 hover:bg-emerald-100 rounded-lg text-sm font-medium transition"
+                        >
+                          Bewerken
+                        </button>
+                        <button 
+                          onClick={() => handleDeletePage(page.id)} 
+                          className="px-3 py-2 text-red-500 hover:bg-red-50 rounded-lg transition"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </ColorCard>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
         )}
 
@@ -1676,15 +2003,90 @@ export const AdminPanel = () => {
             />
           </div>
 
-          <ImageUploader
-            category="ouderwerkgroep"
-            label="Foto Uploaden"
-            currentImage={ouderwerkgroepForm.image}
-            onUpload={(paths) => setOuderwerkgroepForm({ ...ouderwerkgroepForm, image: paths[0] })}
-          />
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-2">Foto's (meerdere mogelijk)</label>
+            <ImageUploader
+              category="ouderwerkgroep"
+              label="Foto's Uploaden"
+              multiple={true}
+              onUpload={(paths) => setOuderwerkgroepForm({ ...ouderwerkgroepForm, images: [...ouderwerkgroepForm.images, ...paths] })}
+            />
+            {ouderwerkgroepForm.images.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-3">
+                {ouderwerkgroepForm.images.map((img, idx) => (
+                  <div key={idx} className="relative">
+                    <img src={img} alt="" className="w-16 h-16 object-cover rounded-lg" />
+                    <button
+                      onClick={() => setOuderwerkgroepForm({
+                        ...ouderwerkgroepForm,
+                        images: ouderwerkgroepForm.images.filter((_, i) => i !== idx)
+                      })}
+                      className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
-          <ColorButton color="red" size="lg" className="w-full" onClick={handleAddOuderwerkgroepActivity}>
+          <ColorButton color="red" size="md" className="w-full" onClick={handleAddOuderwerkgroepActivity}>
             Activiteit Toevoegen
+          </ColorButton>
+        </div>
+      </Modal>
+
+      {/* Download Modal */}
+      <Modal isOpen={showDownloadModal} onClose={() => setShowDownloadModal(false)} title="📄 Document Toevoegen" color="green">
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-2">Document Titel</label>
+            <input
+              type="text"
+              value={downloadForm.title}
+              onChange={(e) => setDownloadForm({ ...downloadForm, title: e.target.value })}
+              className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:outline-none"
+              placeholder="Bijv: Schoolreglement 2025"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-2">Document Bestand</label>
+            <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center hover:border-blue-400 hover:bg-blue-50 transition cursor-pointer">
+              <input
+                type="file"
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.ics"
+                className="hidden"
+                id="download-file-input"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    setDownloadForm({ ...downloadForm, file: e.target.files[0] });
+                  }
+                }}
+              />
+              <label htmlFor="download-file-input" className="cursor-pointer">
+                {downloadForm.file ? (
+                  <div className="flex items-center justify-center gap-3">
+                    <FileText size={32} className="text-blue-500" />
+                    <div className="text-left">
+                      <p className="font-bold text-gray-800">{downloadForm.file.name}</p>
+                      <p className="text-sm text-gray-500">{(downloadForm.file.size / 1024 / 1024).toFixed(2)} MB</p>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <Upload size={32} className="mx-auto text-gray-400 mb-2" />
+                    <p className="text-gray-500">Klik om een bestand te selecteren</p>
+                    <p className="text-xs text-gray-400 mt-1">PDF, Word, Excel, PowerPoint of ICS</p>
+                  </>
+                )}
+              </label>
+            </div>
+          </div>
+
+          <ColorButton color="green" size="md" className="w-full" onClick={handleAddDownload}>
+            Document Toevoegen
           </ColorButton>
         </div>
       </Modal>
@@ -1718,9 +2120,48 @@ export const AdminPanel = () => {
             <p className="text-xs text-gray-500 mt-1">Dit wordt de URL van de pagina</p>
           </div>
 
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-2">Pagina Inhoud</label>
+            <textarea
+              value={pageForm.content}
+              onChange={(e) => setPageForm({ ...pageForm, content: e.target.value })}
+              className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-emerald-500 focus:outline-none"
+              rows={4}
+              placeholder="Beschrijf wat er op deze pagina komt..."
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-2">Foto's</label>
+            <ImageUploader
+              category="pages"
+              label="Foto's Uploaden"
+              multiple={true}
+              onUpload={(paths) => setPageForm({ ...pageForm, pageImages: [...pageForm.pageImages, ...paths] })}
+            />
+            {pageForm.pageImages.length > 0 && (
+              <div className="flex flex-wrap gap-2 mt-3">
+                {pageForm.pageImages.map((img, idx) => (
+                  <div key={idx} className="relative">
+                    <img src={img} alt="" className="w-16 h-16 object-cover rounded-lg" />
+                    <button
+                      onClick={() => setPageForm({
+                        ...pageForm,
+                        pageImages: pageForm.pageImages.filter((_, i) => i !== idx)
+                      })}
+                      className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
           <ColorButton 
             color="green" 
-            size="lg" 
+            size="md" 
             className="w-full" 
             onClick={editingPage ? handleSavePageEdit : handleAddPage}
           >

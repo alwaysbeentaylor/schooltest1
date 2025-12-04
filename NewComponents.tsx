@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Camera, Users, Heart, Calendar, X, ChevronLeft, ChevronRight, ZoomIn, Play, Pause } from 'lucide-react';
-import { PhotoAlbum } from './types';
+import { Camera, Users, Heart, Calendar, X, ChevronLeft, ChevronRight, ZoomIn, Play, Pause, ChevronDown, Filter } from 'lucide-react';
+import { PhotoAlbum, OuderwerkgroepActivity } from './types';
 
 // Hero Carousel Component - Auto-rotating images
 export const HeroCarousel = ({ images }: { images: string[] }) => {
@@ -333,48 +333,94 @@ const AlbumDetail = ({
   );
 };
 
-// Mock data voor ouderwerkgroep activiteiten
-const OUDERWERKGROEP_ACTIVITIES = [
-  {
-    id: '1',
-    title: 'Pannenkoekendag',
-    description: 'Heerlijke pannenkoeken bakken voor alle kinderen. Een jaarlijkse traditie waar iedereen van geniet!',
-    image: '/images/gallery/bibliotheek-1.jpeg'
-  },
-  {
-    id: '2',
-    title: 'Koekjesverkoop',
-    description: 'Zelfgebakken koekjes verkopen om geld in te zamelen voor nieuwe speeltoestellen.',
-    image: '/images/gallery/bibliotheek-3.jpeg'
-  },
-  {
-    id: '3',
-    title: 'Kerstmarkt',
-    description: 'Gezellige kerstmarkt met kraampjes, warme chocomelk en leuke activiteiten voor het hele gezin.',
-    image: '/images/gallery/bibliotheek-5.jpeg'
-  },
-  {
-    id: '4',
-    title: 'Schoolfeest',
-    description: 'Het jaarlijkse schoolfeest organiseren we samen. Van opbouw tot afbraak, iedereen helpt mee!',
-    image: '/images/gallery/bibliotheek-7.jpeg'
-  },
-  {
-    id: '5',
-    title: 'Speelplaats Opknapbeurt',
-    description: 'Samen de speelplaats opknappen en verfraaien. Nieuwe plantjes, verfwerk en gezelligheid.',
-    image: '/images/gallery/bibliotheek-9.jpeg'
-  },
-  {
-    id: '6',
-    title: 'Ontbijt op School',
-    description: 'Een gezond en lekker ontbijt verzorgen voor alle kinderen aan het begin van het schooljaar.',
-    image: '/images/gallery/bibliotheek-11.jpeg'
+// Activity Photo Carousel - Shows small carousel for each activity
+const ActivityPhotoCarousel = ({ images, title }: { images: string[]; title: string }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  
+  if (!images || images.length === 0) {
+    return (
+      <div className="relative h-40 md:h-48 bg-gradient-to-br from-red-100 to-rose-100 flex items-center justify-center">
+        <Camera size={40} className="text-red-300" />
+      </div>
+    );
   }
-];
 
-// Ouderwerkgroep Page Component
-export const ParentsPage = () => {
+  const nextImage = () => setCurrentIndex((prev) => (prev + 1) % images.length);
+  const prevImage = () => setCurrentIndex((prev) => (prev - 1 + images.length) % images.length);
+
+  return (
+    <div className="relative h-40 md:h-48 overflow-hidden group">
+      {images.map((img, idx) => (
+        <img
+          key={idx}
+          src={img}
+          alt={`${title} - ${idx + 1}`}
+          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ${
+            idx === currentIndex ? 'opacity-100' : 'opacity-0'
+          }`}
+        />
+      ))}
+      
+      {images.length > 1 && (
+        <>
+          <button
+            onClick={(e) => { e.stopPropagation(); prevImage(); }}
+            className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+          >
+            <ChevronLeft size={16} />
+          </button>
+          <button
+            onClick={(e) => { e.stopPropagation(); nextImage(); }}
+            className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/80 hover:bg-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-md"
+          >
+            <ChevronRight size={16} />
+          </button>
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+            {images.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={(e) => { e.stopPropagation(); setCurrentIndex(idx); }}
+                className={`w-2 h-2 rounded-full transition-all ${
+                  idx === currentIndex ? 'bg-white w-4' : 'bg-white/50'
+                }`}
+              />
+            ))}
+          </div>
+          <span className="absolute top-2 right-2 bg-black/50 text-white text-xs px-2 py-1 rounded-full">
+            {currentIndex + 1}/{images.length}
+          </span>
+        </>
+      )}
+    </div>
+  );
+};
+
+// Ouderwerkgroep Page Component - Now accepts activities from props
+export const ParentsPage = ({ activities }: { activities?: OuderwerkgroepActivity[] }) => {
+  // Default activities if none provided
+  const defaultActivities: OuderwerkgroepActivity[] = [
+    {
+      id: '1',
+      title: 'Pannenkoekendag',
+      description: 'Heerlijke pannenkoeken bakken voor alle kinderen. Een jaarlijkse traditie waar iedereen van geniet!',
+      images: ['/images/gallery/bibliotheek-1.jpeg']
+    },
+    {
+      id: '2',
+      title: 'Koekjesverkoop',
+      description: 'Zelfgebakken koekjes verkopen om geld in te zamelen voor nieuwe speeltoestellen.',
+      images: ['/images/gallery/bibliotheek-3.jpeg']
+    },
+    {
+      id: '3',
+      title: 'Kerstmarkt',
+      description: 'Gezellige kerstmarkt met kraampjes, warme chocomelk en leuke activiteiten voor het hele gezin.',
+      images: ['/images/gallery/bibliotheek-5.jpeg']
+    },
+  ];
+
+  const displayActivities = activities && activities.length > 0 ? activities : defaultActivities;
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 md:py-16 animate-fade-in">
       <div className="text-center mb-8 md:mb-12">
@@ -456,19 +502,12 @@ export const ParentsPage = () => {
           Onze Activiteiten
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-          {OUDERWERKGROEP_ACTIVITIES.map((activity) => (
+          {displayActivities.map((activity) => (
             <div
               key={activity.id}
               className="group bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100"
             >
-              <div className="relative h-40 md:h-48 overflow-hidden">
-                <img
-                  src={activity.image}
-                  alt={activity.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-              </div>
+              <ActivityPhotoCarousel images={activity.images} title={activity.title} />
               <div className="p-4 md:p-6">
                 <h3 className="font-bold text-base md:text-lg text-gray-900 mb-2 group-hover:text-school-green transition-colors">
                   {activity.title}
@@ -496,9 +535,13 @@ export const ParentsPage = () => {
   );
 };
 
-// Gallery Page Component - Interactive with Album Detail View
+// Gallery Page Component - Interactive with Album Detail View and Dropdown Navigation
 export const GalleryPage = ({ albums }: { albums: PhotoAlbum[] }) => {
   const [selectedAlbum, setSelectedAlbum] = useState<PhotoAlbum | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<string>('all');
+  const [selectedAlbumId, setSelectedAlbumId] = useState<string>('');
+  const [isLocationDropdownOpen, setIsLocationDropdownOpen] = useState(false);
+  const [isAlbumDropdownOpen, setIsAlbumDropdownOpen] = useState(false);
 
   // Filter albums die nog niet verlopen zijn
   const activeAlbums = albums.filter(album => {
@@ -522,6 +565,36 @@ export const GalleryPage = ({ albums }: { albums: PhotoAlbum[] }) => {
     'Verrekijker'
   ];
 
+  // Get available locations with albums
+  const availableLocations = locationOrder.filter(loc => groupedAlbums[loc]?.length > 0);
+
+  // Filter albums based on selected location
+  const filteredAlbums = selectedLocation === 'all' 
+    ? activeAlbums 
+    : activeAlbums.filter(album => album.location === selectedLocation);
+
+  // Get albums for the album dropdown
+  const albumsForDropdown = selectedLocation === 'all' 
+    ? activeAlbums 
+    : groupedAlbums[selectedLocation] || [];
+
+  // Handle album selection from dropdown
+  const handleAlbumSelect = (albumId: string) => {
+    const album = activeAlbums.find(a => a.id === albumId);
+    if (album) {
+      setSelectedAlbum(album);
+    }
+    setSelectedAlbumId(albumId);
+    setIsAlbumDropdownOpen(false);
+  };
+
+  // Handle location change
+  const handleLocationChange = (location: string) => {
+    setSelectedLocation(location);
+    setSelectedAlbumId('');
+    setIsLocationDropdownOpen(false);
+  };
+
   // Show album detail view if album is selected
   if (selectedAlbum) {
     return <AlbumDetail album={selectedAlbum} onClose={() => setSelectedAlbum(null)} />;
@@ -529,7 +602,7 @@ export const GalleryPage = ({ albums }: { albums: PhotoAlbum[] }) => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8 md:py-16 animate-fade-in">
-      <div className="text-center mb-8 md:mb-16">
+      <div className="text-center mb-8 md:mb-12">
         <div className="flex justify-center mb-4 md:mb-6">
           <div className="bg-school-green/10 p-4 rounded-full">
             <Camera className="text-school-green" size={40} />
@@ -543,56 +616,122 @@ export const GalleryPage = ({ albums }: { albums: PhotoAlbum[] }) => {
         </p>
       </div>
 
-      {locationOrder.map((location) => {
-        const locationAlbums = groupedAlbums[location];
-        if (!locationAlbums || locationAlbums.length === 0) return null;
-
-        return (
-          <div key={location} className="mb-8 md:mb-16">
-            <h2 className="text-2xl md:text-3xl font-display font-bold text-gray-900 mb-6 md:mb-8 flex items-center gap-3">
-              <span className="w-2 h-6 md:h-8 bg-school-green rounded-full"></span>
-              {location}
-            </h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
-              {locationAlbums.map((album) => (
+      {/* Dropdown Navigation */}
+      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-4 md:p-6 mb-8 md:mb-12">
+        <div className="flex items-center gap-2 mb-4 text-gray-600">
+          <Filter size={20} />
+          <span className="font-medium">Snelle Navigatie</span>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
+          {/* Location Dropdown */}
+          <div className="relative flex-1">
+            <button
+              onClick={() => {
+                setIsLocationDropdownOpen(!isLocationDropdownOpen);
+                setIsAlbumDropdownOpen(false);
+              }}
+              className="w-full flex items-center justify-between gap-2 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl hover:border-school-green focus:border-school-green focus:outline-none transition"
+            >
+              <span className="font-medium text-gray-700">
+                {selectedLocation === 'all' ? '📍 Alle Locaties' : `📍 ${selectedLocation}`}
+              </span>
+              <ChevronDown size={20} className={`text-gray-400 transition-transform ${isLocationDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {isLocationDropdownOpen && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 z-20 overflow-hidden animate-fade-in">
                 <button
-                  key={album.id}
-                  onClick={() => setSelectedAlbum(album)}
-                  className="group text-left bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 focus:outline-none focus:ring-2 focus:ring-school-green"
+                  onClick={() => handleLocationChange('all')}
+                  className={`w-full text-left px-4 py-3 hover:bg-school-green/10 transition ${selectedLocation === 'all' ? 'bg-school-green/10 text-school-green font-bold' : 'text-gray-700'}`}
                 >
-                  <div className="relative h-48 md:h-64 overflow-hidden">
-                    <img
-                      src={album.coverImage}
-                      alt={album.title}
-                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/0 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
-                    <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 text-white transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 opacity-0 group-hover:opacity-100">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-sm font-medium">
-                          <Camera size={18} />
-                          <span>{album.images.length} foto's</span>
-                        </div>
-                        <span className="text-sm bg-white/20 px-3 py-1 rounded-full">Bekijken</span>
-                      </div>
-                    </div>
-                    {/* Playful corner indicator */}
-                    <div className="absolute top-3 right-3 bg-school-green text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
-                      {album.images.length} 📸
-                    </div>
-                  </div>
-                  <div className="p-4 md:p-6 bg-gradient-to-b from-white to-gray-50">
-                    <h3 className="font-bold text-lg md:text-xl text-gray-900 group-hover:text-school-green transition-colors mb-1 md:mb-2">
-                      {album.title}
-                    </h3>
-                    <p className="text-sm text-gray-500">{location}</p>
-                  </div>
+                  📍 Alle Locaties ({activeAlbums.length} albums)
                 </button>
-              ))}
-            </div>
+                {availableLocations.map(location => (
+                  <button
+                    key={location}
+                    onClick={() => handleLocationChange(location)}
+                    className={`w-full text-left px-4 py-3 hover:bg-school-green/10 transition ${selectedLocation === location ? 'bg-school-green/10 text-school-green font-bold' : 'text-gray-700'}`}
+                  >
+                    📍 {location} ({groupedAlbums[location]?.length || 0} albums)
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
-        );
-      })}
+
+          {/* Album Dropdown */}
+          <div className="relative flex-1">
+            <button
+              onClick={() => {
+                setIsAlbumDropdownOpen(!isAlbumDropdownOpen);
+                setIsLocationDropdownOpen(false);
+              }}
+              className="w-full flex items-center justify-between gap-2 px-4 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl hover:border-school-green focus:border-school-green focus:outline-none transition"
+            >
+              <span className="font-medium text-gray-700 truncate">
+                {selectedAlbumId ? albumsForDropdown.find(a => a.id === selectedAlbumId)?.title || '📸 Kies een album' : '📸 Ga direct naar album'}
+              </span>
+              <ChevronDown size={20} className={`text-gray-400 transition-transform flex-shrink-0 ${isAlbumDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {isAlbumDropdownOpen && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-xl shadow-xl border border-gray-100 z-20 overflow-hidden max-h-64 overflow-y-auto animate-fade-in">
+                {albumsForDropdown.length === 0 ? (
+                  <div className="px-4 py-3 text-gray-500 text-center">Geen albums gevonden</div>
+                ) : (
+                  albumsForDropdown.map(album => (
+                    <button
+                      key={album.id}
+                      onClick={() => handleAlbumSelect(album.id)}
+                      className="w-full text-left px-4 py-3 hover:bg-school-green/10 transition flex items-center gap-3"
+                    >
+                      <img src={album.coverImage} alt="" className="w-10 h-10 rounded-lg object-cover" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-gray-800 truncate">{album.title}</p>
+                        <p className="text-xs text-gray-500">{album.location} • {album.images.length} foto's</p>
+                      </div>
+                    </button>
+                  ))
+                )}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Albums Grid - filtered by location */}
+      {selectedLocation === 'all' ? (
+        // Show grouped by location
+        locationOrder.map((location) => {
+          const locationAlbums = groupedAlbums[location];
+          if (!locationAlbums || locationAlbums.length === 0) return null;
+
+          return (
+            <div key={location} className="mb-8 md:mb-16" id={`location-${location.replace(/\s/g, '-')}`}>
+              <h2 className="text-2xl md:text-3xl font-display font-bold text-gray-900 mb-6 md:mb-8 flex items-center gap-3">
+                <span className="w-2 h-6 md:h-8 bg-school-green rounded-full"></span>
+                {location}
+              </h2>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
+                {locationAlbums.map((album) => (
+                  <AlbumCard key={album.id} album={album} onClick={() => setSelectedAlbum(album)} />
+                ))}
+              </div>
+            </div>
+          );
+        })
+      ) : (
+        // Show only selected location
+        <div className="mb-8 md:mb-16">
+          <h2 className="text-2xl md:text-3xl font-display font-bold text-gray-900 mb-6 md:mb-8 flex items-center gap-3">
+            <span className="w-2 h-6 md:h-8 bg-school-green rounded-full"></span>
+            {selectedLocation}
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-8">
+            {filteredAlbums.map((album) => (
+              <AlbumCard key={album.id} album={album} onClick={() => setSelectedAlbum(album)} />
+            ))}
+          </div>
+        </div>
+      )}
 
       {Object.keys(groupedAlbums).length === 0 && (
         <div className="text-center py-12 md:py-20">
@@ -603,3 +742,38 @@ export const GalleryPage = ({ albums }: { albums: PhotoAlbum[] }) => {
     </div>
   );
 };
+
+// Album Card Component - Reusable
+const AlbumCard = ({ album, onClick }: { album: PhotoAlbum; onClick: () => void }) => (
+  <button
+    onClick={onClick}
+    className="group text-left bg-white rounded-2xl overflow-hidden shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 focus:outline-none focus:ring-2 focus:ring-school-green"
+  >
+    <div className="relative h-48 md:h-64 overflow-hidden">
+      <img
+        src={album.coverImage}
+        alt={album.title}
+        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/0 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+      <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6 text-white transform translate-y-4 group-hover:translate-y-0 transition-transform duration-300 opacity-0 group-hover:opacity-100">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm font-medium">
+            <Camera size={18} />
+            <span>{album.images.length} foto's</span>
+          </div>
+          <span className="text-sm bg-white/20 px-3 py-1 rounded-full">Bekijken</span>
+        </div>
+      </div>
+      <div className="absolute top-3 right-3 bg-school-green text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">
+        {album.images.length} 📸
+      </div>
+    </div>
+    <div className="p-4 md:p-6 bg-gradient-to-b from-white to-gray-50">
+      <h3 className="font-bold text-lg md:text-xl text-gray-900 group-hover:text-school-green transition-colors mb-1 md:mb-2">
+        {album.title}
+      </h3>
+      <p className="text-sm text-gray-500">{album.location}</p>
+    </div>
+  </button>
+);

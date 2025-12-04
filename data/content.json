@@ -44,19 +44,13 @@
   ],
   "events": [
     {
-      "id": "1",
-      "title": "Pedagogische studiedag",
-      "date": "2025-01-15",
-      "type": "Vrije Dag",
-      "grades": ["All"],
-      "description": "Vrije dag voor de leerlingen."
-    },
-    {
       "id": "2",
       "title": "Sinterklaas op school",
       "date": "2025-12-06",
       "type": "Activiteit",
-      "grades": ["All"],
+      "grades": [
+        "All"
+      ],
       "description": "De Sint komt langs in alle klassen."
     },
     {
@@ -64,7 +58,9 @@
       "title": "Kerstvakantie",
       "date": "2025-12-25",
       "type": "Vakantie",
-      "grades": ["All"],
+      "grades": [
+        "All"
+      ],
       "description": "Prettige feesten!"
     }
   ],
@@ -170,19 +166,29 @@
       "id": "1",
       "title": "Pannenkoekendag",
       "description": "Heerlijke pannenkoeken bakken voor alle kinderen. Een jaarlijkse traditie waar iedereen van geniet!",
-      "image": "/images/gallery/bibliotheek-1.jpeg"
+      "images": [
+        "/images/gallery/bibliotheek-1.jpeg",
+        "/images/gallery/bibliotheek-3.jpeg"
+      ]
     },
     {
       "id": "2",
       "title": "Koekjesverkoop",
       "description": "Zelfgebakken koekjes verkopen om geld in te zamelen voor nieuwe speeltoestellen.",
-      "image": "/images/gallery/bibliotheek-3.jpeg"
+      "images": [
+        "/images/gallery/bibliotheek-3.jpeg",
+        "/images/gallery/bibliotheek-5.jpeg"
+      ]
     },
     {
       "id": "3",
       "title": "Kerstmarkt",
       "description": "Gezellige kerstmarkt met kraampjes, warme chocomelk en leuke activiteiten voor het hele gezin.",
-      "image": "/images/gallery/bibliotheek-5.jpeg"
+      "images": [
+        "/images/gallery/bibliotheek-5.jpeg",
+        "/images/gallery/bibliotheek-7.jpeg",
+        "/images/gallery/bibliotheek-9.jpeg"
+      ]
     }
   ],
   "submissions": [
@@ -193,7 +199,7 @@
       "name": "Jan Peeters",
       "email": "jan@test.be",
       "details": "Wanneer is de volgende info-avond?",
-      "status": "Nieuw"
+      "status": "Gelezen"
     },
     {
       "id": "2",
@@ -205,17 +211,87 @@
       "status": "Gelezen"
     }
   ],
+  "downloads": [],
   "pages": [
-    { "id": "home", "name": "Home", "slug": "home", "active": true, "order": 0, "type": "system" },
-    { "id": "about", "name": "Over Ons", "slug": "about", "active": true, "order": 1, "type": "system" },
-    { "id": "enroll", "name": "Inschrijven", "slug": "enroll", "active": true, "order": 2, "type": "system" },
-    { "id": "team", "name": "Team", "slug": "team", "active": true, "order": 3, "type": "system" },
-    { "id": "news", "name": "Nieuws", "slug": "news", "active": true, "order": 4, "type": "system" },
-    { "id": "calendar", "name": "Agenda", "slug": "calendar", "active": true, "order": 5, "type": "system" },
-    { "id": "info", "name": "Info", "slug": "info", "active": true, "order": 6, "type": "system" },
-    { "id": "ouderwerkgroep", "name": "Ouderwerkgroep", "slug": "ouderwerkgroep", "active": true, "order": 7, "type": "system" },
-    { "id": "gallery", "name": "Foto's", "slug": "gallery", "active": true, "order": 8, "type": "system" },
-    { "id": "contact", "name": "Contact", "slug": "contact", "active": true, "order": 9, "type": "system" }
+    {
+      "id": "home",
+      "name": "Home",
+      "slug": "home",
+      "active": true,
+      "order": 0,
+      "type": "system"
+    },
+    {
+      "id": "about",
+      "name": "Onze School",
+      "slug": "about",
+      "active": true,
+      "order": 1,
+      "type": "system"
+    },
+    {
+      "id": "enroll",
+      "name": "Inschrijven",
+      "slug": "enroll",
+      "active": true,
+      "order": 2,
+      "type": "system"
+    },
+    {
+      "id": "team",
+      "name": "Team",
+      "slug": "team",
+      "active": true,
+      "order": 3,
+      "type": "system"
+    },
+    {
+      "id": "news",
+      "name": "Nieuws",
+      "slug": "news",
+      "active": true,
+      "order": 4,
+      "type": "system"
+    },
+    {
+      "id": "calendar",
+      "name": "Agenda",
+      "slug": "calendar",
+      "active": true,
+      "order": 5,
+      "type": "system"
+    },
+    {
+      "id": "info",
+      "name": "Info",
+      "slug": "info",
+      "active": true,
+      "order": 6,
+      "type": "system"
+    },
+    {
+      "id": "ouderwerkgroep",
+      "name": "Ouderwerkgroep",
+      "slug": "ouderwerkgroep",
+      "active": true,
+      "order": 7,
+      "type": "system"
+    },
+    {
+      "id": "gallery",
+      "name": "Foto's",
+      "slug": "gallery",
+      "active": true,
+      "order": 8,
+      "type": "system"
+    },
+    {
+      "id": "contact",
+      "name": "Contact",
+      "slug": "contact",
+      "active": true,
+      "order": 9,
+      "type": "system"
+    }
   ]
 }
-
