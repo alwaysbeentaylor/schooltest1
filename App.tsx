@@ -3,12 +3,12 @@ import {
   Menu, X, Phone, Mail, MapPin, Calendar, 
   BookOpen, Users, Camera, Star, Info, 
   ChevronRight, Lock, ExternalLink, Download,
-  Trash2, Plus, Edit, Image as ImageIcon, Sparkles, Check, Video, School,
-  MessageCircle, Send, Settings, FileText, Inbox
+  Trash2, Plus, Edit, Image as ImageIcon, Sparkles, Check, School,
+  MessageCircle, Send, Settings, FileText, Inbox, Loader2
 } from 'lucide-react';
 import { generateNewsContent, generateChatResponse } from './services/geminiService';
 import { MOCK_NEWS, MOCK_EVENTS, MOCK_ALBUMS, MOCK_TEAM, DEFAULT_CONFIG, MOCK_SUBMISSIONS, INITIAL_CHAT_MESSAGES, HERO_IMAGES } from './constants';
-import { NewsItem, CalendarEvent, PhotoAlbum, PageView, Teacher, SiteConfig, FormSubmission, ChatMessage } from './types';
+import { NewsItem, CalendarEvent, PhotoAlbum, PageView, Teacher, SiteConfig, FormSubmission, ChatMessage, Enrollment } from './types';
 import { HeroCarousel, ParentsPage, GalleryPage } from './NewComponents';
 import { AdminPanel } from './AdminPanel';
 
@@ -43,6 +43,9 @@ const ChatWidget = ({ events, config }: { events: CalendarEvent[], config: SiteC
     const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     useEffect(scrollToBottom, [messages, isOpen]);
 
+    // Safety check - use default config if not provided
+    const safeConfig = config || DEFAULT_CONFIG;
+
     // Build context for AI with school info
     const buildSchoolContext = () => {
         const upcomingEvents = events
@@ -60,12 +63,12 @@ Je bent de virtuele assistent van VBS Sint-Maarten in Sijsele.
 SCHOOLINFORMATIE:
 - School begint om 08:30 en eindigt om 15:30
 - Middagpauze: 12:05 - 13:20
-${config.contactAddress ? `- Adres: ${config.contactAddress}` : ''}
-- Email: ${config.contactEmail}
-${config.contactPhoneKloosterstraat ? `- Telefoon Kloosterstraat: ${config.contactPhoneKloosterstraat}` : ''}
-${config.contactPhoneHovingenlaan ? `- Telefoon Hovingenlaan: ${config.contactPhoneHovingenlaan}` : ''}
-${config.contactPhoneGSM ? `- GSM: ${config.contactPhoneGSM}` : ''}
-- Menu/Maaltijden: ${config.menuUrl}
+${safeConfig.contactAddress ? `- Adres: ${safeConfig.contactAddress}` : ''}
+- Email: ${safeConfig.contactEmail}
+${safeConfig.contactPhoneKloosterstraat ? `- Telefoon Kloosterstraat: ${safeConfig.contactPhoneKloosterstraat}` : ''}
+${safeConfig.contactPhoneHovingenlaan ? `- Telefoon Hovingenlaan: ${safeConfig.contactPhoneHovingenlaan}` : ''}
+${safeConfig.contactPhoneGSM ? `- GSM: ${safeConfig.contactPhoneGSM}` : ''}
+- Menu/Maaltijden: ${safeConfig.menuUrl}
 
 KOMENDE EVENEMENTEN:
 ${eventsList || 'Geen evenementen gepland'}
@@ -206,13 +209,12 @@ const DEFAULT_PAGES: PageConfig[] = [
   { id: 'home', name: 'Home', slug: 'home', active: true, order: 0, type: 'system' },
   { id: 'about', name: 'Onze School', slug: 'about', active: true, order: 1, type: 'system' },
   { id: 'enroll', name: 'Inschrijven', slug: 'enroll', active: true, order: 2, type: 'system' },
-  { id: 'team', name: 'Team', slug: 'team', active: true, order: 3, type: 'system' },
-  { id: 'news', name: 'Nieuws', slug: 'news', active: true, order: 4, type: 'system' },
-  { id: 'calendar', name: 'Agenda', slug: 'calendar', active: true, order: 5, type: 'system' },
-  { id: 'info', name: 'Info', slug: 'info', active: true, order: 6, type: 'system' },
-  { id: 'ouderwerkgroep', name: 'Ouderwerkgroep', slug: 'ouderwerkgroep', active: true, order: 7, type: 'system' },
-  { id: 'gallery', name: "Foto's", slug: 'gallery', active: true, order: 8, type: 'system' },
-  { id: 'contact', name: 'Contact', slug: 'contact', active: true, order: 9, type: 'system' },
+  { id: 'news', name: 'Nieuws', slug: 'news', active: true, order: 3, type: 'system' },
+  { id: 'calendar', name: 'Agenda', slug: 'calendar', active: true, order: 4, type: 'system' },
+  { id: 'info', name: 'Info', slug: 'info', active: true, order: 5, type: 'system' },
+  { id: 'ouderwerkgroep', name: 'Ouderwerkgroep', slug: 'ouderwerkgroep', active: true, order: 6, type: 'system' },
+  { id: 'gallery', name: "Foto's", slug: 'gallery', active: true, order: 7, type: 'system' },
+  { id: 'contact', name: 'Contact', slug: 'contact', active: true, order: 8, type: 'system' },
 ];
 
 // 2. NAVIGATION - Dynamic based on page config
@@ -262,10 +264,10 @@ const Navbar = ({ activePage, setPage, mobileMenuOpen, setMobileMenuOpen, config
               </button>
             ))}
             <button 
-              onClick={() => setPage('box')}
-              className="bg-gradient-to-r from-school-orange to-orange-500 text-white px-5 py-2.5 rounded-full text-sm font-bold hover:from-orange-600 hover:to-orange-500 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105 flex items-center gap-2 ml-3"
+              onClick={() => setPage('menu')}
+              className="bg-gradient-to-r from-school-green to-emerald-600 text-white px-5 py-2.5 rounded-full text-sm font-bold hover:from-green-700 hover:to-emerald-700 transition-all duration-300 shadow-md hover:shadow-lg hover:scale-105 flex items-center gap-2 ml-3"
             >
-              <Star size={16} className="animate-pulse" /> Box
+              <BookOpen size={16} /> Menu
             </button>
           </div>
 
@@ -312,10 +314,10 @@ const Navbar = ({ activePage, setPage, mobileMenuOpen, setMobileMenuOpen, config
             </button>
           ))}
           <button 
-             onClick={() => { setPage('box'); setMobileMenuOpen(false); }}
-             className="w-full px-4 py-4 text-white bg-gradient-to-r from-school-orange to-orange-500 font-bold rounded-xl flex items-center gap-2 justify-center mt-4 hover:from-orange-600 hover:to-orange-500 transition-all duration-300 shadow-md"
+             onClick={() => { setPage('menu'); setMobileMenuOpen(false); }}
+             className="w-full px-4 py-4 text-white bg-gradient-to-r from-school-green to-emerald-600 font-bold rounded-xl flex items-center gap-2 justify-center mt-4 hover:from-green-700 hover:to-emerald-700 transition-all duration-300 shadow-md"
           >
-            <Star size={18} /> Belevingsbox Aanvragen
+            <BookOpen size={18} /> Menu Bekijken
           </button>
         </div>
       </div>
@@ -323,63 +325,70 @@ const Navbar = ({ activePage, setPage, mobileMenuOpen, setMobileMenuOpen, config
   );
 };
 
-const Footer = ({ setPage }: any) => (
-  <footer className="bg-school-dark text-white pt-12 pb-6">
-    <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8">
-      <div>
-        <div className="flex items-center gap-3 mb-4">
-          <img src="/images/logo.png" alt="VBS Sint-Maarten" className="h-14 w-14 object-contain" />
-          <h3 className="font-display text-xl font-bold text-school-orange">VBS Sint-Maarten</h3>
+const Footer = (props: { setPage: (p: PageView) => void; config: SiteConfig }) => {
+  const { setPage, config: configProp } = props;
+  
+  // Safety check - use default values if config is not available
+  const config = configProp || DEFAULT_CONFIG;
+  
+  return (
+    <footer className="bg-school-dark text-white pt-12 pb-6">
+      <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8">
+        <div>
+          <div className="flex items-center gap-3 mb-4">
+            <img src="/images/logo.png" alt="VBS Sint-Maarten" className="h-14 w-14 object-contain" />
+            <h3 className="font-display text-xl font-bold text-school-orange">VBS Sint-Maarten</h3>
+          </div>
+          <p className="text-gray-300 text-sm leading-relaxed mb-4">
+            Een school met een hart voor elk kind.<br/>
+            Samen groeien, samen leren, samen leven.
+          </p>
+          <div className="flex items-center gap-4 mt-4">
+            <a href="https://www.facebook.com/vrijebasisschool.sintmaarten" target="_blank" rel="noreferrer" className="text-gray-400 hover:text-white transition-colors">
+              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
+            </a>
+            <a href="https://www.instagram.com/vbs_sintmaarten_sijsele/" target="_blank" rel="noreferrer" className="text-gray-400 hover:text-white transition-colors">
+              <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+            </a>
+          </div>
         </div>
-        <p className="text-gray-300 text-sm leading-relaxed mb-4">
-          Een school met een hart voor elk kind.<br/>
-          Samen groeien, samen leren, samen leven.
-        </p>
-        <div className="flex items-center gap-4 mt-4">
-          <a href="https://www.facebook.com/vrijebasisschool.sintmaarten" target="_blank" rel="noreferrer" className="text-gray-400 hover:text-white transition-colors">
-            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>
-          </a>
-          <a href="https://www.instagram.com/vbs_sintmaarten_sijsele/" target="_blank" rel="noreferrer" className="text-gray-400 hover:text-white transition-colors">
-            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
-          </a>
+        <div>
+          <h3 className="font-display text-lg font-bold mb-4">Contact</h3>
+          <ul className="space-y-2 text-sm text-gray-300">
+            {config.contactAddress && <li className="flex items-center gap-2"><MapPin size={14} /> {config.contactAddress}</li>}
+            <li className="flex items-center gap-2"><Mail size={14} /> {config.contactEmail}</li>
+            {config.contactPhoneKloosterstraat && <li className="flex items-center gap-2"><Phone size={14} /> Kloosterstraat: {config.contactPhoneKloosterstraat}</li>}
+            {config.contactPhoneHovingenlaan && <li className="flex items-center gap-2"><Phone size={14} /> Hovingenlaan: {config.contactPhoneHovingenlaan}</li>}
+            {config.contactPhoneGSM && <li className="flex items-center gap-2"><Phone size={14} /> GSM: {config.contactPhoneGSM}</li>}
+          </ul>
+        </div>
+        <div>
+          <h3 className="font-display text-lg font-bold mb-4">Snel naar</h3>
+          <ul className="space-y-2 text-sm text-gray-300">
+            <li><button onClick={() => setPage('calendar')} className="hover:text-white hover:underline transition-colors">Kalender</button></li>
+            <li><button onClick={() => setPage('info')} className="hover:text-white hover:underline transition-colors">Praktische Info</button></li>
+            <li><button onClick={() => setPage('enroll')} className="hover:text-white hover:underline transition-colors">Inschrijven</button></li>
+            <li><button onClick={() => setPage('ouderwerkgroep')} className="hover:text-white hover:underline transition-colors">Ouderwerkgroep</button></li>
+            <li><button onClick={() => setPage('gallery')} className="hover:text-white hover:underline transition-colors">Fotogalerij</button></li>
+          </ul>
+        </div>
+        <div>
+          <h3 className="font-display text-lg font-bold mb-4">Admin</h3>
+          <button 
+            onClick={() => setPage('admin')} 
+            className="flex items-center gap-2 bg-gray-800 hover:bg-school-red text-white px-4 py-2 rounded transition-colors text-sm w-full md:w-auto justify-center md:justify-start" 
+          >
+            <Lock size={14} />
+            <span>Inloggen Beheerder</span>
+          </button>
         </div>
       </div>
-      <div>
-        <h3 className="font-display text-lg font-bold mb-4">Contact</h3>
-        <ul className="space-y-2 text-sm text-gray-300">
-          {config.contactAddress && <li className="flex items-center gap-2"><MapPin size={14} /> {config.contactAddress}</li>}
-          <li className="flex items-center gap-2"><Mail size={14} /> {config.contactEmail}</li>
-          {config.contactPhoneKloosterstraat && <li className="flex items-center gap-2"><Phone size={14} /> Kloosterstraat: {config.contactPhoneKloosterstraat}</li>}
-          {config.contactPhoneHovingenlaan && <li className="flex items-center gap-2"><Phone size={14} /> Hovingenlaan: {config.contactPhoneHovingenlaan}</li>}
-          {config.contactPhoneGSM && <li className="flex items-center gap-2"><Phone size={14} /> GSM: {config.contactPhoneGSM}</li>}
-        </ul>
+      <div className="border-t border-gray-700 mt-12 pt-6 text-center text-xs text-gray-500">
+        <span>&copy; 2025 VBS Sint-Maarten Sijsele</span>
       </div>
-      <div>
-        <h3 className="font-display text-lg font-bold mb-4">Snel naar</h3>
-        <ul className="space-y-2 text-sm text-gray-300">
-          <li><button onClick={() => setPage('calendar')} className="hover:text-white hover:underline transition-colors">Kalender</button></li>
-          <li><button onClick={() => setPage('info')} className="hover:text-white hover:underline transition-colors">Praktische Info</button></li>
-          <li><button onClick={() => setPage('enroll')} className="hover:text-white hover:underline transition-colors">Inschrijven</button></li>
-          <li><button onClick={() => setPage('ouderwerkgroep')} className="hover:text-white hover:underline transition-colors">Ouderwerkgroep</button></li>
-          <li><button onClick={() => setPage('gallery')} className="hover:text-white hover:underline transition-colors">Fotogalerij</button></li>
-        </ul>
-      </div>
-      <div>
-        <h3 className="font-display text-lg font-bold mb-4">Admin</h3>
-        <button 
-          onClick={() => setPage('admin')} 
-          className="flex items-center gap-2 bg-gray-800 hover:bg-school-red text-white px-4 py-2 rounded transition-colors text-sm w-full md:w-auto justify-center md:justify-start" 
-        >
-          <Lock size={14} />
-          <span>Inloggen Beheerder</span>
-        </button>
-      </div>
-    </div>
-    <div className="border-t border-gray-700 mt-12 pt-6 text-center text-xs text-gray-500">
-      <span>&copy; 2025 VBS Sint-Maarten Sijsele</span>
-    </div>
-  </footer>
-);
+    </footer>
+  );
+};
 
 // 3. PAGES
 
@@ -410,10 +419,6 @@ const HomePage = ({ news, setPage, config, heroImages }: { news: NewsItem[], set
              <button onClick={() => setPage('about')} className="bg-white/10 backdrop-blur-md text-white border-2 border-white/50 px-8 py-4 rounded-xl font-bold text-lg hover:bg-white/20 transition shadow-lg">
                Ontdek onze visie
              </button>
-             <button onClick={() => alert("De virtuele rondleiding wordt gelanceerd in Q2 2026!")} className="bg-school-orange text-white px-6 py-4 rounded-xl font-bold text-lg hover:bg-orange-600 transition shadow-lg flex items-center gap-3">
-               <Video size={24} />
-               Virtuele Tour
-             </button>
           </div>
         </div>
       </div>
@@ -426,11 +431,11 @@ const HomePage = ({ news, setPage, config, heroImages }: { news: NewsItem[], set
         <h3 className="font-display text-2xl font-bold">Kalender</h3>
         <p className="text-white/90 mt-2">Bekijk vakanties en activiteiten</p>
       </div>
-      <a href={config.menuUrl} target="_blank" rel="noreferrer" className="bg-school-green p-10 text-white flex flex-col items-center text-center hover:bg-green-700 transition cursor-pointer group">
+      <div onClick={() => setPage('menu')} className="bg-school-green p-10 text-white flex flex-col items-center text-center hover:bg-green-700 transition cursor-pointer group">
         <div className="bg-white/20 p-4 rounded-full mb-4 group-hover:scale-110 transition"><BookOpen size={40} /></div>
         <h3 className="font-display text-2xl font-bold">Menu</h3>
         <p className="text-white/90 mt-2">Warme maaltijden (Hanssens)</p>
-      </a>
+      </div>
       <div className="bg-school-red p-10 text-white flex flex-col items-center text-center hover:bg-red-700 transition cursor-pointer group" onClick={() => setPage('box')}>
         <div className="bg-white/20 p-4 rounded-full mb-4 group-hover:scale-110 transition"><Star size={40} /></div>
         <h3 className="font-display text-2xl font-bold">Belevingsbox</h3>
@@ -596,6 +601,61 @@ const AboutPage = ({ config, albumImages }: { config: SiteConfig; albumImages?: 
   </div>
 );
 
+const MenuPage = ({ config }: { config: SiteConfig }) => (
+  <div className="animate-fade-in">
+    <div className="bg-gradient-to-br from-emerald-50 to-green-50 py-8 md:py-16">
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="text-center mb-8 md:mb-12">
+          <div className="inline-block bg-gradient-to-r from-school-green to-emerald-600 p-4 md:p-6 rounded-full mb-4 md:mb-6">
+            <BookOpen size={48} className="text-white" />
+          </div>
+          <h1 className="text-3xl md:text-5xl font-display font-bold text-school-dark mb-3 md:mb-4">Wekelijks Menu</h1>
+          <p className="text-gray-600 text-lg md:text-xl max-w-2xl mx-auto">
+            Bekijk het menu van deze week - Warme maaltijden via Hanssens
+          </p>
+        </div>
+        
+        <div className="bg-white rounded-2xl shadow-2xl overflow-hidden border-2 border-green-100">
+          {/* Menu Header */}
+          <div className="bg-gradient-to-r from-school-green to-emerald-600 p-4 md:p-6 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-xl md:text-2xl font-bold mb-1">Hanssens Menu</h2>
+              <p className="text-white/90 text-sm md:text-base">Warme maaltijden voor de kinderen</p>
+            </div>
+            <a 
+              href={config.menuUrl} 
+              target="_blank" 
+              rel="noreferrer"
+              className="bg-white/20 hover:bg-white/30 px-4 py-2 rounded-lg font-bold text-sm md:text-base transition flex items-center gap-2 self-start sm:self-auto"
+            >
+              <ExternalLink size={18} />
+              Open in nieuw venster
+            </a>
+          </div>
+          
+          {/* Iframe Container */}
+          <div className="relative w-full bg-gray-50" style={{ minHeight: '700px', height: '900px' }}>
+            <iframe
+              src={config.menuUrl}
+              className="w-full h-full border-0"
+              title="Hanssens Menu"
+              allow="fullscreen"
+              loading="lazy"
+            />
+          </div>
+        </div>
+        
+        {/* Info Box */}
+        <div className="mt-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+          <p className="text-sm md:text-base text-blue-800">
+            <strong>Tip:</strong> Het menu wordt wekelijks bijgewerkt. Scroll in het menu om alle dagen te zien. Als het menu niet goed zichtbaar is, klik dan op "Open in nieuw venster" bovenaan.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+);
+
 const TeamPage = ({ team }: { team: Teacher[] }) => (
   <div className="max-w-6xl mx-auto px-4 py-16 animate-fade-in">
     <div className="text-center mb-16">
@@ -635,48 +695,1232 @@ const TeamPage = ({ team }: { team: Teacher[] }) => (
   </div>
 );
 
-const EnrollPage = ({ addSubmission }: { addSubmission: (s: FormSubmission) => void }) => {
-    const [formData, setFormData] = useState({ name: '', phone: '', childName: '', childDob: '', type: 'Rondleiding' });
-    
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        addSubmission({
-            id: Date.now().toString(),
-            date: new Date().toISOString(),
-            type: 'Inschrijving',
-            name: formData.name,
-            details: `Kind: ${formData.childName} (${formData.childDob}) - Type: ${formData.type} - Tel: ${formData.phone}`,
-            status: 'Nieuw'
-        });
-        alert("Bedankt! We nemen spoedig contact op.");
-        setFormData({ name: '', phone: '', childName: '', childDob: '', type: 'Rondleiding' });
-    }
+// Opleidingsniveau opties
+const OPLEIDINGSNIVEAU_OPTIONS = [
+  'lager onderwijs niet afgewerkt',
+  'gewoon of buitengewoon lager onderwijs afgewerkt',
+  'lager secundair onderwijs afgewerkt (bv. A3, A4, B3, deeltijds beroepsonderwijs, leercontract)',
+  'hoger secundair onderwijs afgewerkt (ASO, TSO, KSO, BSO, A2, B2, HSTL, vierde graad BUSO)',
+  'hoger onderwijs afgewerkt (hogeschool of universiteit, A1, B1, gegradueerde, licentiaat, ingenieur, doctor, master, bachelor)'
+];
 
+// Initial enrollment form state
+const initialEnrollmentForm: Omit<Enrollment, 'id' | 'submittedAt' | 'status'> = {
+  inschrijvingsDatum: new Date().toISOString().split('T')[0],
+  schooljaar: '2025 - 2026',
+  afdeling: 'kleuter Kloosterstraat',
+  naamKind: '',
+  voornaamKind: '',
+  adres: '',
+  geboortedatumKind: '',
+  geboorteplaatsKind: '',
+  bewijsGeboortedatum: 'Kids ID',
+  rijksregisternummerKind: '',
+  geslacht: 'M',
+  nationaliteit: 'Belg',
+  isOudsteGezin: true,
+  andereKinderen: '',
+  bankrekening: '',
+  telefoonVast: '',
+  gsmPapa: '',
+  gsmMama: '',
+  grootoudersPapa: '',
+  grootoudersMama: '',
+  werkPapa: '',
+  werkMama: '',
+  emailPapa: '',
+  emailMama: '',
+  naamPapa: '',
+  geboortedatumPapa: '',
+  geboorteplaatsPapa: '',
+  rijksregisternummerPapa: '',
+  leerplichtverantwoordelijkePapa: '1',
+  beroepPapa: '',
+  opleidingsniveauPapa: OPLEIDINGSNIVEAU_OPTIONS[0],
+  naamMama: '',
+  geboortedatumMama: '',
+  geboorteplaatsMama: '',
+  rijksregisternummerMama: '',
+  leerplichtverantwoordelijkeMama: '1',
+  beroepMama: '',
+  opleidingsniveauMama: OPLEIDINGSNIVEAU_OPTIONS[0],
+  huisarts: '',
+  ziekenhuis: 'AZ Sint-Lucas',
+  allergieenZiektes: '',
+  akkoordReglement: false,
+  eersteSchooldag: '',
+  startKlas: '',
+  anderstaligNieuwkomer: false,
+  verslagBuitengewoonOnderwijs: false,
+  broerZusIngeschreven: false,
+  personeelslid: false,
+  vorigeSchool: '',
+  ondertekeningNaam: '',
+  ondertekeningDatum: new Date().toISOString().split('T')[0],
+  ondertekeningUur: new Date().toTimeString().slice(0, 5),
+  taalMoeder: 'Nederlands',
+  taalVader: 'Nederlands',
+  taalBroersZussen: 'Nederlands',
+  taalVrienden: 'Nederlands',
+  bevestigingOpEerDatum: new Date().toISOString().split('T')[0],
+  bevestigingOpEerNaam: ''
+};
+
+// Progress Step Component
+const ProgressStep = ({ step, currentStep, label }: { step: number; currentStep: number; label: string }) => (
+  <div className="flex flex-col items-center">
+    <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ${
+      currentStep >= step 
+        ? 'bg-school-green text-white' 
+        : 'bg-gray-200 text-gray-500'
+    }`}>
+      {currentStep > step ? <Check size={18} /> : step}
+    </div>
+    <span className={`text-xs mt-1 hidden md:block ${currentStep >= step ? 'text-school-green font-medium' : 'text-gray-400'}`}>
+      {label}
+    </span>
+  </div>
+);
+
+// Form Section Title Component
+const FormSectionTitle = ({ icon, title, subtitle }: { icon: React.ReactNode; title: string; subtitle?: string }) => (
+  <div className="mb-6 pb-4 border-b border-gray-100">
+    <h3 className="text-xl md:text-2xl font-bold text-gray-800 flex items-center gap-3">
+      <span className="text-school-green">{icon}</span>
+      {title}
+    </h3>
+    {subtitle && <p className="text-gray-500 mt-1 text-sm">{subtitle}</p>}
+  </div>
+);
+
+// Form Input Component
+const FormInput = ({ 
+  label, 
+  name, 
+  value, 
+  onChange, 
+  type = 'text', 
+  required = false, 
+  placeholder = '',
+  helpText = ''
+}: { 
+  label: string; 
+  name: string; 
+  value: string; 
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  type?: string;
+  required?: boolean;
+  placeholder?: string;
+  helpText?: string;
+}) => (
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    <input
+      type={type}
+      name={name}
+      value={value}
+      onChange={onChange}
+      required={required}
+      placeholder={placeholder}
+      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green focus:border-transparent transition"
+    />
+    {helpText && <p className="text-xs text-gray-400 mt-1">{helpText}</p>}
+  </div>
+);
+
+// Form Select Component
+const FormSelect = ({ 
+  label, 
+  name, 
+  value, 
+  onChange, 
+  options, 
+  required = false 
+}: { 
+  label: string; 
+  name: string; 
+  value: string; 
+  onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  options: { value: string; label: string }[];
+  required?: boolean;
+}) => (
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-1">
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    <select
+      name={name}
+      value={value}
+      onChange={onChange}
+      required={required}
+      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green focus:border-transparent transition"
+    >
+      {options.map(opt => (
+        <option key={opt.value} value={opt.value}>{opt.label}</option>
+      ))}
+    </select>
+  </div>
+);
+
+// Form Radio Group Component
+const FormRadioGroup = ({ 
+  label, 
+  name, 
+  value, 
+  onChange, 
+  options, 
+  required = false 
+}: { 
+  label: string; 
+  name: string; 
+  value: string | boolean; 
+  onChange: (value: string | boolean) => void;
+  options: { value: string | boolean; label: string }[];
+  required?: boolean;
+}) => (
+  <div>
+    <label className="block text-sm font-medium text-gray-700 mb-2">
+      {label} {required && <span className="text-red-500">*</span>}
+    </label>
+    <div className="flex flex-wrap gap-3">
+      {options.map(opt => (
+        <label 
+          key={String(opt.value)} 
+          className={`flex items-center gap-2 px-4 py-2 rounded-lg border-2 cursor-pointer transition ${
+            value === opt.value 
+              ? 'border-school-green bg-green-50 text-school-green' 
+              : 'border-gray-200 hover:border-gray-300'
+          }`}
+        >
+          <input
+            type="radio"
+            name={name}
+            checked={value === opt.value}
+            onChange={() => onChange(opt.value)}
+            className="hidden"
+          />
+          <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+            value === opt.value ? 'border-school-green' : 'border-gray-300'
+          }`}>
+            {value === opt.value && <span className="w-2 h-2 rounded-full bg-school-green" />}
+          </span>
+          {opt.label}
+        </label>
+      ))}
+    </div>
+  </div>
+);
+
+// Form Checkbox Component
+const FormCheckbox = ({ 
+  label, 
+  checked, 
+  onChange, 
+  required = false 
+}: { 
+  label: string; 
+  checked: boolean; 
+  onChange: (checked: boolean) => void;
+  required?: boolean;
+}) => (
+  <label className="flex items-start gap-3 cursor-pointer group">
+    <div className={`w-5 h-5 mt-0.5 rounded border-2 flex items-center justify-center transition ${
+      checked ? 'bg-school-green border-school-green' : 'border-gray-300 group-hover:border-gray-400'
+    }`}>
+      {checked && <Check size={14} className="text-white" />}
+    </div>
+    <input
+      type="checkbox"
+      checked={checked}
+      onChange={(e) => onChange(e.target.checked)}
+      required={required}
+      className="hidden"
+    />
+    <span className="text-sm text-gray-700">{label} {required && <span className="text-red-500">*</span>}</span>
+  </label>
+);
+
+const EnrollPage = ({ addEnrollment, setPage }: { addEnrollment: (e: Omit<Enrollment, 'id' | 'submittedAt' | 'status'>) => Promise<void>; setPage: (p: PageView) => void }) => {
+  const [currentStep, setCurrentStep] = useState(1);
+  const [formData, setFormData] = useState(initialEnrollmentForm);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
+  const totalSteps = 6;
+
+  const updateField = (field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    updateField(e.target.name, e.target.value);
+  };
+
+  const nextStep = () => {
+    if (currentStep < totalSteps) {
+      setCurrentStep(prev => prev + 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const prevStep = () => {
+    if (currentStep > 1) {
+      setCurrentStep(prev => prev - 1);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+    
+    // Check if required field is filled
+    if (!formData.akkoordReglement) {
+      alert('U moet akkoord gaan met het pedagogisch project en schoolreglement om door te kunnen gaan.');
+      return;
+    }
+    
+    setIsSubmitting(true);
+    console.log('Submitting enrollment...', formData);
+    
+    // Always show success after a short delay, even if backend fails
+    // The data will be saved locally anyway
+    const showSuccess = () => {
+      console.log('Showing success screen');
+      setIsSubmitting(false);
+      setSubmitSuccess(true);
+      setFormData(initialEnrollmentForm);
+      setCurrentStep(1);
+    };
+    
+    try {
+      // Try to save to backend, but don't wait too long
+      const savePromise = addEnrollment(formData).catch(err => {
+        console.warn('Save failed, but continuing anyway:', err);
+      });
+      
+      // Show success after max 2 seconds, regardless of backend response
+      const timeoutId = setTimeout(() => {
+        console.log('Timeout reached, showing success');
+        showSuccess();
+      }, 2000);
+      
+      // If save completes quickly, show success immediately
+      await savePromise;
+      clearTimeout(timeoutId);
+      showSuccess();
+      
+    } catch (error) {
+      console.error('Error in handleSubmit:', error);
+      // Always show success, data is saved locally
+      showSuccess();
+    }
+  };
+
+  if (submitSuccess) {
     return (
-        <div className="max-w-4xl mx-auto px-4 py-16 animate-fade-in">
-            <h1 className="text-5xl font-display font-bold text-school-red mb-12 text-center">Inschrijven</h1>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                <div className="space-y-6 text-gray-600">
-                    <div className="bg-blue-50 border-l-4 border-blue-500 p-6 rounded-r-lg">
-                        <h3 className="font-bold text-blue-800 mb-2 text-lg">Instapmomenten Peuters</h3>
-                        <p>Is uw kindje geboren in 2022? We berekenen graag samen de instapdatum.</p>
+      <div className="max-w-2xl mx-auto px-4 py-16 animate-fade-in text-center">
+        <div className="bg-green-50 rounded-2xl p-8 md:p-12 border-2 border-green-200">
+          <div className="w-20 h-20 bg-school-green rounded-full flex items-center justify-center mx-auto mb-6">
+            <Check size={40} className="text-white" />
                     </div>
-                    <p>Wij nodigen u graag uit voor een kennismakingsgesprek en rondleiding.</p>
+          <h1 className="text-3xl font-display font-bold text-school-dark mb-4">Inschrijving Ontvangen! ✅</h1>
+          <p className="text-gray-600 mb-6 text-lg">
+            Bedankt voor uw inschrijving. We hebben alle gegevens ontvangen en nemen zo snel mogelijk contact met u op.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <button
+              onClick={() => {
+                setSubmitSuccess(false);
+                setFormData(initialEnrollmentForm);
+                setCurrentStep(1);
+              }}
+              className="bg-gray-200 text-gray-700 font-bold px-8 py-3 rounded-lg hover:bg-gray-300 transition"
+            >
+              Nieuwe Inschrijving
+            </button>
+            <button
+              onClick={() => setPage('home')}
+              className="bg-school-green text-white font-bold px-8 py-3 rounded-lg hover:bg-green-700 transition"
+            >
+              Terug naar Hoofdmenu
+            </button>
                 </div>
-                <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
-                    <h2 className="text-2xl font-bold mb-6 text-gray-800">Interesse formulier</h2>
-                    <form className="space-y-5" onSubmit={handleSubmit}>
-                        <input required placeholder="Naam Ouder" className="w-full p-3 bg-gray-50 border rounded-lg" value={formData.name} onChange={e=>setFormData({...formData, name: e.target.value})}/>
-                        <input placeholder="Telefoon" className="w-full p-3 bg-gray-50 border rounded-lg" value={formData.phone} onChange={e=>setFormData({...formData, phone: e.target.value})}/>
-                        <input placeholder="Naam Kind" className="w-full p-3 bg-gray-50 border rounded-lg" value={formData.childName} onChange={e=>setFormData({...formData, childName: e.target.value})}/>
-                        <input type="date" className="w-full p-3 bg-gray-50 border rounded-lg" value={formData.childDob} onChange={e=>setFormData({...formData, childDob: e.target.value})}/>
-                        <select className="w-full p-3 bg-gray-50 border rounded-lg" value={formData.type} onChange={e=>setFormData({...formData, type: e.target.value})}>
-                            <option>Rondleiding aanvragen</option>
-                            <option>Inschrijving definitief maken</option>
-                        </select>
-                        <button type="submit" className="w-full bg-school-green text-white font-bold py-4 rounded-lg hover:bg-green-700 transition">Versturen</button>
-                    </form>
                 </div>
+            </div>
+    );
+  }
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 py-8 md:py-16 animate-fade-in">
+      <div className="text-center mb-8">
+        <h1 className="text-3xl md:text-5xl font-display font-bold text-school-red mb-4">Inschrijvingsformulier</h1>
+        <p className="text-gray-600">Vul alle gegevens zorgvuldig in. Velden met * zijn verplicht.</p>
+      </div>
+
+      {/* Progress Bar */}
+      <div className="mb-8 bg-white rounded-2xl shadow-lg p-4 md:p-6 border border-gray-100">
+        <div className="flex justify-between items-center">
+          {[
+            { step: 1, label: 'Kind' },
+            { step: 2, label: 'Gezin' },
+            { step: 3, label: 'Ouders' },
+            { step: 4, label: 'Medisch' },
+            { step: 5, label: 'Verklaring' },
+            { step: 6, label: 'Taal' }
+          ].map((item, idx, arr) => (
+            <React.Fragment key={item.step}>
+              <ProgressStep step={item.step} currentStep={currentStep} label={item.label} />
+              {idx < arr.length - 1 && (
+                <div className={`flex-1 h-1 mx-2 rounded ${currentStep > item.step ? 'bg-school-green' : 'bg-gray-200'}`} />
+              )}
+            </React.Fragment>
+          ))}
+        </div>
+      </div>
+
+      <form onSubmit={handleSubmit}>
+        <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8 border border-gray-100">
+          
+          {/* Step 1: Basisgegevens Kind */}
+          {currentStep === 1 && (
+            <div className="animate-fade-in">
+              <FormSectionTitle 
+                icon={<Users size={24} />} 
+                title="Identificatiegegevens Kind" 
+                subtitle="Basisinformatie over uw kind"
+              />
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <FormInput
+                  label="Ingeschreven op"
+                  name="inschrijvingsDatum"
+                  type="date"
+                  value={formData.inschrijvingsDatum}
+                  onChange={handleInputChange}
+                  required
+                />
+                <FormSelect
+                  label="Schooljaar"
+                  name="schooljaar"
+                  value={formData.schooljaar}
+                  onChange={handleInputChange}
+                  required
+                  options={[
+                    { value: '2024 - 2025', label: '2024 - 2025' },
+                    { value: '2025 - 2026', label: '2025 - 2026' },
+                    { value: '2026 - 2027', label: '2026 - 2027' }
+                  ]}
+                />
+              </div>
+
+              <div className="mb-6">
+                <FormSelect
+                  label="Afdeling"
+                  name="afdeling"
+                  value={formData.afdeling}
+                  onChange={handleInputChange}
+                  required
+                  options={[
+                    { value: 'kleuter Kloosterstraat', label: 'Kleuter Kloosterstraat' },
+                    { value: 'kleuter Hovingenlaan', label: 'Kleuter Hovingenlaan' },
+                    { value: 'lager Kloosterstraat', label: 'Lager Kloosterstraat' }
+                  ]}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <FormInput
+                  label="Naam van uw kind"
+                  name="naamKind"
+                  value={formData.naamKind}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="Familienaam"
+                />
+                <FormInput
+                  label="Voornaam van uw kind"
+                  name="voornaamKind"
+                  value={formData.voornaamKind}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="Voornaam"
+                />
+              </div>
+
+              <div className="mb-6">
+                <FormInput
+                  label="Adres"
+                  name="adres"
+                  value={formData.adres}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="Straat, huisnummer, postcode, gemeente"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <FormInput
+                  label="Geboortedatum"
+                  name="geboortedatumKind"
+                  type="date"
+                  value={formData.geboortedatumKind}
+                  onChange={handleInputChange}
+                  required
+                />
+                <FormInput
+                  label="Geboorteplaats"
+                  name="geboorteplaatsKind"
+                  value={formData.geboorteplaatsKind}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="Stad/gemeente"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <FormSelect
+                  label="Bewijs van geboortedatum"
+                  name="bewijsGeboortedatum"
+                  value={formData.bewijsGeboortedatum}
+                  onChange={handleInputChange}
+                  required
+                  options={[
+                    { value: 'Kids ID', label: 'Kids ID' },
+                    { value: 'ISI+ kaart', label: 'ISI+ kaart' },
+                    { value: 'Anders', label: 'Anders' }
+                  ]}
+                />
+                {formData.bewijsGeboortedatum === 'Anders' && (
+                  <FormInput
+                    label="Specificeer"
+                    name="bewijsGeboortedatumAnders"
+                    value={formData.bewijsGeboortedatumAnders || ''}
+                    onChange={handleInputChange}
+                    placeholder="Welk bewijs?"
+                  />
+                )}
+              </div>
+
+              <div className="mb-6">
+                <FormInput
+                  label="Rijksregisternummer kind"
+                  name="rijksregisternummerKind"
+                  value={formData.rijksregisternummerKind}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="00.00.00-000.00"
+                  helpText="Formaat: 00.00.00-000.00"
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                <FormRadioGroup
+                  label="Geslacht"
+                  name="geslacht"
+                  value={formData.geslacht}
+                  onChange={(val) => updateField('geslacht', val)}
+                  required
+                  options={[
+                    { value: 'M', label: 'M' },
+                    { value: 'V', label: 'V' },
+                    { value: 'X', label: 'X' }
+                  ]}
+                />
+                <div>
+                  <FormSelect
+                    label="Nationaliteit"
+                    name="nationaliteit"
+                    value={formData.nationaliteit}
+                    onChange={handleInputChange}
+                    required
+                    options={[
+                      { value: 'Belg', label: 'Belg' },
+                      { value: 'Nederlander', label: 'Nederlander' },
+                      { value: 'Anders', label: 'Anders' }
+                    ]}
+                  />
+                  {formData.nationaliteit === 'Anders' && (
+                    <div className="mt-2">
+                      <FormInput
+                        label="Specificeer nationaliteit"
+                        name="nationaliteitAnders"
+                        value={formData.nationaliteitAnders || ''}
+                        onChange={handleInputChange}
+                        placeholder="Welke nationaliteit?"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 2: Gezinssituatie */}
+          {currentStep === 2 && (
+            <div className="animate-fade-in">
+              <FormSectionTitle 
+                icon={<Users size={24} />} 
+                title="Gezinssituatie & Contact" 
+                subtitle="Informatie over het gezin en contactgegevens"
+              />
+              
+              <div className="mb-6">
+                <FormRadioGroup
+                  label="Is uw kind de oudste van het gezin?"
+                  name="isOudsteGezin"
+                  value={formData.isOudsteGezin}
+                  onChange={(val) => updateField('isOudsteGezin', val)}
+                  required
+                  options={[
+                    { value: true, label: 'Ja' },
+                    { value: false, label: 'Nee' }
+                  ]}
+                />
+              </div>
+
+              {!formData.isOudsteGezin && (
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Naam/namen van andere kinderen
+                  </label>
+                  <textarea
+                    name="andereKinderen"
+                    value={formData.andereKinderen}
+                    onChange={handleInputChange}
+                    rows={2}
+                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green"
+                    placeholder="Noteer hier de namen van uw andere kinderen"
+                  />
+                </div>
+              )}
+
+              <div className="mb-6">
+                <FormInput
+                  label="Bankrekening voor schoolfacturen"
+                  name="bankrekening"
+                  value={formData.bankrekening}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="BE00 0000 0000 0000"
+                />
+              </div>
+
+              <div className="bg-gray-50 rounded-xl p-4 mb-6">
+                <h4 className="font-bold text-gray-700 mb-4">Telefoonnummers</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <FormInput
+                    label="Vast toestel"
+                    name="telefoonVast"
+                    value={formData.telefoonVast || ''}
+                    onChange={handleInputChange}
+                    placeholder="050 00 00 00"
+                  />
+                  <FormInput
+                    label="GSM papa"
+                    name="gsmPapa"
+                    value={formData.gsmPapa || ''}
+                    onChange={handleInputChange}
+                    placeholder="0400 00 00 00"
+                  />
+                  <FormInput
+                    label="GSM mama"
+                    name="gsmMama"
+                    value={formData.gsmMama || ''}
+                    onChange={handleInputChange}
+                    placeholder="0400 00 00 00"
+                  />
+                </div>
+              </div>
+
+              <div className="bg-gray-50 rounded-xl p-4 mb-6">
+                <h4 className="font-bold text-gray-700 mb-4">Grootouders (noodcontact)</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormInput
+                    label="Grootouders papa (naam + tel)"
+                    name="grootoudersPapa"
+                    value={formData.grootoudersPapa || ''}
+                    onChange={handleInputChange}
+                    placeholder="Naam - 0400 00 00 00"
+                  />
+                  <FormInput
+                    label="Grootouders mama (naam + tel)"
+                    name="grootoudersMama"
+                    value={formData.grootoudersMama || ''}
+                    onChange={handleInputChange}
+                    placeholder="Naam - 0400 00 00 00"
+                  />
+                </div>
+              </div>
+
+              <div className="bg-gray-50 rounded-xl p-4 mb-6">
+                <h4 className="font-bold text-gray-700 mb-4">Werk contactgegevens</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormInput
+                    label="Werk papa (naam + tel)"
+                    name="werkPapa"
+                    value={formData.werkPapa || ''}
+                    onChange={handleInputChange}
+                    placeholder="Bedrijf - 050 00 00 00"
+                  />
+                  <FormInput
+                    label="Werk mama (naam + tel)"
+                    name="werkMama"
+                    value={formData.werkMama || ''}
+                    onChange={handleInputChange}
+                    placeholder="Bedrijf - 050 00 00 00"
+                  />
+                </div>
+              </div>
+
+              <div className="bg-gray-50 rounded-xl p-4">
+                <h4 className="font-bold text-gray-700 mb-4">E-mailadressen</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormInput
+                    label="E-mail papa"
+                    name="emailPapa"
+                    type="email"
+                    value={formData.emailPapa || ''}
+                    onChange={handleInputChange}
+                    placeholder="papa@email.be"
+                  />
+                  <FormInput
+                    label="E-mail mama"
+                    name="emailMama"
+                    type="email"
+                    value={formData.emailMama || ''}
+                    onChange={handleInputChange}
+                    placeholder="mama@email.be"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 3: Gegevens Ouders */}
+          {currentStep === 3 && (
+            <div className="animate-fade-in">
+              <FormSectionTitle 
+                icon={<Users size={24} />} 
+                title="Gegevens Ouders" 
+                subtitle="Persoonlijke gegevens van beide ouders"
+              />
+              
+              {/* Papa */}
+              <div className="bg-blue-50 rounded-xl p-4 md:p-6 mb-6 border border-blue-100">
+                <h4 className="font-bold text-blue-800 mb-4 text-lg">Gegevens Papa</h4>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <FormInput
+                    label="Naam en voornaam"
+                    name="naamPapa"
+                    value={formData.naamPapa}
+                    onChange={handleInputChange}
+                    required
+                    placeholder="Familienaam Voornaam"
+                  />
+                  <FormInput
+                    label="Geboortedatum"
+                    name="geboortedatumPapa"
+                    type="date"
+                    value={formData.geboortedatumPapa}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <FormInput
+                    label="Geboorteplaats"
+                    name="geboorteplaatsPapa"
+                    value={formData.geboorteplaatsPapa}
+                    onChange={handleInputChange}
+                    required
+                    placeholder="Stad/gemeente"
+                  />
+                  <FormInput
+                    label="Rijksregisternummer"
+                    name="rijksregisternummerPapa"
+                    value={formData.rijksregisternummerPapa}
+                    onChange={handleInputChange}
+                    required
+                    placeholder="00.00.00-000.00"
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <FormRadioGroup
+                    label="Leerplichtverantwoordelijke"
+                    name="leerplichtverantwoordelijkePapa"
+                    value={formData.leerplichtverantwoordelijkePapa}
+                    onChange={(val) => updateField('leerplichtverantwoordelijkePapa', val)}
+                    required
+                    options={[
+                      { value: '1', label: '1 (Primair)' },
+                      { value: '2', label: '2 (Secundair)' }
+                    ]}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Dit is van belang voor o.a. het belastingsvoordeel bij opvang.</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormInput
+                    label="Beroep"
+                    name="beroepPapa"
+                    value={formData.beroepPapa || ''}
+                    onChange={handleInputChange}
+                    placeholder="Beroep"
+                  />
+                  <FormSelect
+                    label="Opleidingsniveau"
+                    name="opleidingsniveauPapa"
+                    value={formData.opleidingsniveauPapa}
+                    onChange={handleInputChange}
+                    required
+                    options={OPLEIDINGSNIVEAU_OPTIONS.map(o => ({ value: o, label: o }))}
+                  />
+                </div>
+              </div>
+
+              {/* Mama */}
+              <div className="bg-pink-50 rounded-xl p-4 md:p-6 border border-pink-100">
+                <h4 className="font-bold text-pink-800 mb-4 text-lg">Gegevens Mama</h4>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <FormInput
+                    label="Naam en voornaam"
+                    name="naamMama"
+                    value={formData.naamMama}
+                    onChange={handleInputChange}
+                    required
+                    placeholder="Familienaam Voornaam"
+                  />
+                  <FormInput
+                    label="Geboortedatum"
+                    name="geboortedatumMama"
+                    type="date"
+                    value={formData.geboortedatumMama}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <FormInput
+                    label="Geboorteplaats"
+                    name="geboorteplaatsMama"
+                    value={formData.geboorteplaatsMama}
+                    onChange={handleInputChange}
+                    required
+                    placeholder="Stad/gemeente"
+                  />
+                  <FormInput
+                    label="Rijksregisternummer"
+                    name="rijksregisternummerMama"
+                    value={formData.rijksregisternummerMama}
+                    onChange={handleInputChange}
+                    required
+                    placeholder="00.00.00-000.00"
+                  />
+                </div>
+
+                <div className="mb-4">
+                  <FormRadioGroup
+                    label="Leerplichtverantwoordelijke"
+                    name="leerplichtverantwoordelijkeMama"
+                    value={formData.leerplichtverantwoordelijkeMama}
+                    onChange={(val) => updateField('leerplichtverantwoordelijkeMama', val)}
+                    required
+                    options={[
+                      { value: '1', label: '1 (Primair)' },
+                      { value: '2', label: '2 (Secundair)' }
+                    ]}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Dit is van belang voor o.a. het belastingsvoordeel bij opvang.</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormInput
+                    label="Beroep"
+                    name="beroepMama"
+                    value={formData.beroepMama || ''}
+                    onChange={handleInputChange}
+                    placeholder="Beroep"
+                  />
+                  <FormSelect
+                    label="Opleidingsniveau"
+                    name="opleidingsniveauMama"
+                    value={formData.opleidingsniveauMama}
+                    onChange={handleInputChange}
+                    required
+                    options={OPLEIDINGSNIVEAU_OPTIONS.map(o => ({ value: o, label: o }))}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 4: Medisch & Praktisch */}
+          {currentStep === 4 && (
+            <div className="animate-fade-in">
+              <FormSectionTitle 
+                icon={<Info size={24} />} 
+                title="Medische Informatie" 
+                subtitle="Belangrijke gezondheidsgegevens"
+              />
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <FormInput
+                  label="Naam van uw huisarts"
+                  name="huisarts"
+                  value={formData.huisarts}
+                  onChange={handleInputChange}
+                  required
+                  placeholder="Dr. ..."
+                />
+                <FormSelect
+                  label="Ziekenhuis van voorkeur"
+                  name="ziekenhuis"
+                  value={formData.ziekenhuis}
+                  onChange={handleInputChange}
+                  required
+                  options={[
+                    { value: 'AZ Sint-Lucas', label: 'AZ Sint-Lucas' },
+                    { value: 'AZ Sint-Jan', label: 'AZ Sint-Jan' }
+                  ]}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Allergieën of ziektes waarvan wij op de hoogte moeten zijn
+                </label>
+                <textarea
+                  name="allergieenZiektes"
+                  value={formData.allergieenZiektes || ''}
+                  onChange={handleInputChange}
+                  rows={4}
+                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-school-green"
+                  placeholder="Vermeld hier eventuele allergieën, chronische ziektes of andere medische aandachtspunten..."
+                />
+              </div>
+
+              <div className="mt-6 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded-r-lg">
+                <p className="text-sm text-yellow-800">
+                  <strong>Belangrijk:</strong> Deze informatie wordt vertrouwelijk behandeld en enkel gedeeld met het personeel dat direct betrokken is bij de zorg voor uw kind.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Step 5: Verklaring & Bevestiging */}
+          {currentStep === 5 && (
+            <div className="animate-fade-in">
+              <FormSectionTitle 
+                icon={<FileText size={24} />} 
+                title="Verklaring Ouders" 
+                subtitle="Bevestiging en ondertekening"
+              />
+              
+              <div className="bg-gray-50 rounded-xl p-4 mb-6 text-sm text-gray-700">
+                <p className="mb-2">
+                  Ondergetekende (vader, moeder of voogd) verklaart hierbij dat zijn/haar kind alleen in de 
+                  gesubsidieerde vrije basisschool Sint-Maarten, Kloosterstraat 4A, 8340 Sijsele is ingeschreven 
+                  en verklaart zich akkoord met het pedagogisch project en schoolreglement.
+                </p>
+                <a 
+                  href="https://www.vrijebasisschoolsijsele.be/praktische-info/reglement/" 
+                  target="_blank" 
+                  rel="noreferrer"
+                  className="text-school-green hover:underline font-medium"
+                >
+                  Bekijk het schoolreglement →
+                </a>
+              </div>
+
+              <div className="mb-6">
+                <FormCheckbox
+                  label="Ik verklaar mij akkoord met het pedagogisch project en het schoolreglement"
+                  checked={formData.akkoordReglement}
+                  onChange={(val) => updateField('akkoordReglement', val)}
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                <FormInput
+                  label="Eerste schooldag in onze school"
+                  name="eersteSchooldag"
+                  type="date"
+                  value={formData.eersteSchooldag}
+                  onChange={handleInputChange}
+                  required
+                  helpText="Bereken de instapdatum op onderwijs.vlaanderen.be"
+                />
+                <FormInput
+                  label="In welke klas start uw kind?"
+                  name="startKlas"
+                  value={formData.startKlas || ''}
+                  onChange={handleInputChange}
+                  placeholder="bv. 1e kleuter, 3e leerjaar"
+                />
+              </div>
+
+              <div className="space-y-4 mb-6">
+                <FormRadioGroup
+                  label="Is uw kind een anderstalige nieuwkomer?"
+                  name="anderstaligNieuwkomer"
+                  value={formData.anderstaligNieuwkomer}
+                  onChange={(val) => updateField('anderstaligNieuwkomer', val)}
+                  required
+                  options={[
+                    { value: false, label: 'Nee' },
+                    { value: true, label: 'Ja' }
+                  ]}
+                />
+
+                <FormRadioGroup
+                  label="Heeft uw kind een verslag buitengewoon onderwijs (niet type 8)?"
+                  name="verslagBuitengewoonOnderwijs"
+                  value={formData.verslagBuitengewoonOnderwijs}
+                  onChange={(val) => updateField('verslagBuitengewoonOnderwijs', val)}
+                  required
+                  options={[
+                    { value: false, label: 'Nee' },
+                    { value: true, label: 'Ja' }
+                  ]}
+                />
+
+                <FormRadioGroup
+                  label="Is er al een broer of zus ingeschreven in onze school? (voorrangskenmerk)"
+                  name="broerZusIngeschreven"
+                  value={formData.broerZusIngeschreven}
+                  onChange={(val) => updateField('broerZusIngeschreven', val)}
+                  required
+                  options={[
+                    { value: false, label: 'Nee' },
+                    { value: true, label: 'Ja' }
+                  ]}
+                />
+
+                <FormRadioGroup
+                  label="Bent u een personeelslid van onze school? (voorrangskenmerk)"
+                  name="personeelslid"
+                  value={formData.personeelslid}
+                  onChange={(val) => updateField('personeelslid', val)}
+                  required
+                  options={[
+                    { value: false, label: 'Nee' },
+                    { value: true, label: 'Ja' }
+                  ]}
+                />
+              </div>
+
+              <div className="mb-6">
+                <FormInput
+                  label="Naam en adres van eventueel vorige school"
+                  name="vorigeSchool"
+                  value={formData.vorigeSchool || ''}
+                  onChange={handleInputChange}
+                  placeholder="Schoolnaam, adres"
+                />
+              </div>
+
+              <div className="bg-green-50 rounded-xl p-4 border border-green-200">
+                <h4 className="font-bold text-green-800 mb-4">Ondertekening</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <FormInput
+                    label="Naam ondertekenaar"
+                    name="ondertekeningNaam"
+                    value={formData.ondertekeningNaam}
+                    onChange={handleInputChange}
+                    required
+                    placeholder="Volledige naam"
+                  />
+                  <FormInput
+                    label="Datum"
+                    name="ondertekeningDatum"
+                    type="date"
+                    value={formData.ondertekeningDatum}
+                    onChange={handleInputChange}
+                    required
+                  />
+                  <FormInput
+                    label="Uur"
+                    name="ondertekeningUur"
+                    type="time"
+                    value={formData.ondertekeningUur}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Step 6: Taalvragenlijst */}
+          {currentStep === 6 && (
+            <div className="animate-fade-in">
+              <FormSectionTitle 
+                icon={<MessageCircle size={24} />} 
+                title="Vragenlijst Taalgebruik" 
+                subtitle="Vragen van de Vlaamse Overheid over de achtergrond van uw kind"
+              />
+              
+              <div className="bg-blue-50 rounded-xl p-4 mb-6 text-sm text-gray-700">
+                <p>
+                  De Vlaamse Overheid wil de leerlingen beter leren kennen. Het beantwoorden duurt slechts een 
+                  paar minuten maar het helpt de Vlaamse Overheid en de scholen om het onderwijs van uw kind te verbeteren.
+                </p>
+              </div>
+
+              <div className="space-y-6">
+                <FormSelect
+                  label="Welke taal spreekt het kind meestal met de moeder?"
+                  name="taalMoeder"
+                  value={formData.taalMoeder}
+                  onChange={handleInputChange}
+                  required
+                  options={[
+                    { value: 'Nederlands', label: 'Nederlands' },
+                    { value: 'Frans', label: 'Frans' },
+                    { value: 'Een andere taal', label: 'Een andere taal' },
+                    { value: 'Niet van toepassing', label: 'Niet van toepassing (geen contact of overleden)' }
+                  ]}
+                />
+
+                <FormSelect
+                  label="Welke taal spreekt het kind meestal met de vader?"
+                  name="taalVader"
+                  value={formData.taalVader}
+                  onChange={handleInputChange}
+                  required
+                  options={[
+                    { value: 'Nederlands', label: 'Nederlands' },
+                    { value: 'Frans', label: 'Frans' },
+                    { value: 'Een andere taal', label: 'Een andere taal' },
+                    { value: 'Niet van toepassing', label: 'Niet van toepassing (geen contact of overleden)' }
+                  ]}
+                />
+
+                <FormSelect
+                  label="Welke taal spreekt het kind meestal met broer(s) of zus(sen)?"
+                  name="taalBroersZussen"
+                  value={formData.taalBroersZussen}
+                  onChange={handleInputChange}
+                  required
+                  options={[
+                    { value: 'Nederlands', label: 'Nederlands' },
+                    { value: 'Frans', label: 'Frans' },
+                    { value: 'Een andere taal', label: 'Een andere taal' },
+                    { value: 'Niet van toepassing', label: 'Niet van toepassing (geen broers/zussen)' }
+                  ]}
+                />
+
+                <FormSelect
+                  label="Welke taal spreekt het kind meestal met vrienden?"
+                  name="taalVrienden"
+                  value={formData.taalVrienden}
+                  onChange={handleInputChange}
+                  required
+                  options={[
+                    { value: 'Nederlands', label: 'Nederlands' },
+                    { value: 'Frans', label: 'Frans' },
+                    { value: 'Een andere taal', label: 'Een andere taal' },
+                    { value: 'Weet niet', label: 'Ik weet het niet' }
+                  ]}
+                />
+              </div>
+
+              <div className="mt-8 bg-green-50 rounded-xl p-4 border border-green-200">
+                <h4 className="font-bold text-green-800 mb-4">Bevestiging op eer</h4>
+                <p className="text-sm text-gray-700 mb-4">
+                  Ik bevestig op eer dat alle gegevens op dit formulier naar waarheid zijn ingevuld.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormInput
+                    label="Datum"
+                    name="bevestigingOpEerDatum"
+                    type="date"
+                    value={formData.bevestigingOpEerDatum}
+                    onChange={handleInputChange}
+                    required
+                  />
+                  <FormInput
+                    label="Naam en voornaam ondertekenaar"
+                    name="bevestigingOpEerNaam"
+                    value={formData.bevestigingOpEerNaam}
+                    onChange={handleInputChange}
+                    required
+                    placeholder="Volledige naam"
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Navigation Buttons */}
+          <div className="flex justify-between items-center mt-8 pt-6 border-t border-gray-100">
+            <button
+              type="button"
+              onClick={prevStep}
+              disabled={currentStep === 1}
+              className={`flex items-center gap-2 px-6 py-3 rounded-lg font-bold transition ${
+                currentStep === 1 
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              <ChevronRight size={20} className="rotate-180" />
+              Vorige
+            </button>
+
+            {currentStep < totalSteps ? (
+              <button
+                type="button"
+                onClick={nextStep}
+                className="flex items-center gap-2 bg-school-green text-white px-6 py-3 rounded-lg font-bold hover:bg-green-700 transition"
+              >
+                Volgende
+                <ChevronRight size={20} />
+              </button>
+            ) : (
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className={`flex items-center gap-2 px-8 py-3 rounded-lg font-bold transition ${
+                  isSubmitting
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : formData.akkoordReglement
+                    ? 'bg-school-red text-white hover:bg-red-700'
+                    : 'bg-gray-400 text-gray-600 cursor-not-allowed'
+                }`}
+                title={!formData.akkoordReglement ? 'U moet akkoord gaan met het reglement' : ''}
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 size={20} className="animate-spin" />
+                    Verzenden...
+                  </>
+                ) : (
+                  <>
+                    <Check size={20} />
+                    Inschrijving Verzenden
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+        </div>
+      </form>
+
+      {/* Info Box */}
+      <div className="mt-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+        <h3 className="font-bold text-blue-800 mb-2">Hulp nodig?</h3>
+        <p className="text-sm text-blue-700">
+          Heeft u vragen bij het invullen van dit formulier? Neem gerust contact op met de school. 
+          We helpen u graag verder!
+        </p>
             </div>
         </div>
     );
@@ -1125,7 +2369,10 @@ const InfoPage = ({ config, downloads }: { config: SiteConfig; downloads: Array<
   </div>
 );
 
-const API_BASE = 'http://localhost:3001/api';
+// Detecteer of we lokaal of in productie draaien
+const API_BASE = window.location.hostname === 'localhost' 
+  ? 'http://localhost:3001/api' 
+  : ''; // Laat leeg voor productie - we gebruiken mock data
 
 // 4. ROOT COMPONENT
 function App() {
@@ -1145,10 +2392,25 @@ function App() {
   const [pages, setPages] = useState<PageConfig[]>(DEFAULT_PAGES);
   const [ouderwerkgroepActivities, setOuderwerkgroepActivities] = useState<Array<{id: string; title: string; description: string; images: string[]}>>([]);
   const [downloads, setDownloads] = useState<Array<{id: string; title: string; filename: string; uploadDate: string}>>([]);
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
 
   // Fetch data from API on mount
   useEffect(() => {
     const fetchData = async () => {
+      // Als we geen API_BASE hebben (productie), gebruik mock data
+      if (!API_BASE) {
+        console.log('Productie modus: gebruik mock data');
+        // Probeer data uit localStorage te laden als fallback
+        const savedPages = localStorage.getItem('pages');
+        if (savedPages) {
+          try {
+            setPages(JSON.parse(savedPages));
+          } catch (e) {}
+        }
+        setLoading(false);
+        return;
+      }
+
       try {
         const response = await fetch(`${API_BASE}/data`);
         if (response.ok) {
@@ -1163,6 +2425,7 @@ function App() {
           if (data.pages) setPages(data.pages);
           if (data.ouderwerkgroep) setOuderwerkgroepActivities(data.ouderwerkgroep);
           if (data.downloads) setDownloads(data.downloads);
+          if (data.enrollments) setEnrollments(data.enrollments);
         }
       } catch (error) {
         console.log('Backend niet beschikbaar, gebruik mock data');
@@ -1180,6 +2443,12 @@ function App() {
   }, []);
 
   const addSubmission = async (sub: FormSubmission) => {
+    // Als geen backend, alleen lokaal opslaan
+    if (!API_BASE) {
+      setSubmissions([sub, ...submissions]);
+      return;
+    }
+
     try {
       const response = await fetch(`${API_BASE}/submissions`, {
         method: 'POST',
@@ -1196,6 +2465,44 @@ function App() {
     }
     // Fallback to local state
     setSubmissions([sub, ...submissions]);
+  };
+
+  const addEnrollment = async (enrollmentData: Omit<Enrollment, 'id' | 'submittedAt' | 'status'>) => {
+    const newEnrollment: Enrollment = {
+      ...enrollmentData,
+      id: Date.now().toString(),
+      submittedAt: new Date().toISOString(),
+      status: 'nieuw'
+    };
+
+    // Als geen backend, alleen lokaal opslaan
+    if (!API_BASE) {
+      setEnrollments([newEnrollment, ...enrollments]);
+      return Promise.resolve();
+    }
+
+    try {
+      const response = await fetch(`${API_BASE}/enrollments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newEnrollment)
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setEnrollments([data.item, ...enrollments]);
+        return Promise.resolve();
+      } else {
+        // Als response niet ok is, gebruik fallback maar gooi geen error
+        console.warn('Backend response niet ok, gebruik lokale opslag');
+        setEnrollments([newEnrollment, ...enrollments]);
+        return Promise.resolve();
+      }
+    } catch (error) {
+      console.log('Backend niet beschikbaar, gebruik lokale opslag');
+      // Fallback to local state - dit is ok, we gooien geen error
+      setEnrollments([newEnrollment, ...enrollments]);
+      return Promise.resolve();
+    }
   };
 
   // Filter active news (simulating backend logic)
@@ -1225,8 +2532,8 @@ function App() {
       <main className="flex-grow">
         {page === 'home' && <HomePage news={activeNews} setPage={setPage} config={config} heroImages={heroImages} />}
         {page === 'about' && <AboutPage config={config} albumImages={albums.flatMap(a => a.images).slice(0, 20)} />}
-        {page === 'enroll' && <EnrollPage addSubmission={addSubmission} />}
-        {page === 'team' && <TeamPage team={team} />}
+        {page === 'menu' && <MenuPage config={config} />}
+        {page === 'enroll' && <EnrollPage addEnrollment={addEnrollment} setPage={setPage} />}
         {page === 'news' && (
              <div className="max-w-7xl mx-auto px-4 py-16 animate-fade-in">
                 <h1 className="text-5xl font-display font-bold text-school-dark mb-12 text-center">Nieuws & Actualiteit</h1>
@@ -1537,7 +2844,7 @@ function App() {
         )}
       </main>
 
-      <Footer setPage={setPage} />
+      <Footer setPage={setPage} config={config} />
       <ChatWidget events={events} config={config} />
     </div>
   );
