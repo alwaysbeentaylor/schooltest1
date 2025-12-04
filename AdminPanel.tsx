@@ -9,6 +9,7 @@ import {
   User, Baby, Building2, Stethoscope, Languages, ChevronDown, ChevronUp, RefreshCw
 } from 'lucide-react';
 import { generateNewsContent } from './services/geminiService';
+import { MOCK_NEWS, MOCK_EVENTS, MOCK_ALBUMS, MOCK_TEAM, DEFAULT_CONFIG, MOCK_SUBMISSIONS, HERO_IMAGES } from './constants';
 
 // Detecteer of we lokaal of in productie draaien
 const API_BASE = window.location.hostname === 'localhost' 
@@ -1034,19 +1035,19 @@ export const AdminPanel = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   const [activeTab, setActiveTab] = useState<string>('dashboard');
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Start as false, only set to true when fetching
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Data states
-  const [config, setConfig] = useState<SiteConfig | null>(null);
-  const [heroImages, setHeroImages] = useState<string[]>([]);
-  const [news, setNews] = useState<NewsItem[]>([]);
-  const [events, setEvents] = useState<CalendarEvent[]>([]);
-  const [albums, setAlbums] = useState<PhotoAlbum[]>([]);
-  const [team, setTeam] = useState<TeamMember[]>([]);
+  // Data states - Initialize with mock data as fallback
+  const [config, setConfig] = useState<SiteConfig | null>(DEFAULT_CONFIG);
+  const [heroImages, setHeroImages] = useState<string[]>(HERO_IMAGES);
+  const [news, setNews] = useState<NewsItem[]>(MOCK_NEWS);
+  const [events, setEvents] = useState<CalendarEvent[]>(MOCK_EVENTS);
+  const [albums, setAlbums] = useState<PhotoAlbum[]>(MOCK_ALBUMS);
+  const [team, setTeam] = useState<TeamMember[]>(MOCK_TEAM as TeamMember[]);
   const [ouderwerkgroep, setOuderwerkgroep] = useState<OuderwerkgroepActivity[]>([]);
-  const [submissions, setSubmissions] = useState<FormSubmission[]>([]);
+  const [submissions, setSubmissions] = useState<FormSubmission[]>(MOCK_SUBMISSIONS);
   const [pages, setPages] = useState<PageConfig[]>(DEFAULT_PAGES);
   const [downloads, setDownloads] = useState<Download[]>([]);
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
@@ -1073,53 +1074,60 @@ export const AdminPanel = () => {
 
   // Fetch all data
   const fetchData = async () => {
-    // Als we geen API_BASE hebben (productie zonder backend), gebruik localStorage
+    setLoading(true);
+    
+    // Als we geen API_BASE hebben (productie zonder backend), gebruik localStorage of mock data
     if (!API_BASE) {
-      console.log('Geen backend beschikbaar, gebruik lokale opslag');
+      console.log('Geen backend beschikbaar, gebruik lokale opslag of mock data');
       // Probeer data uit localStorage te laden
       try {
         const savedData = localStorage.getItem('adminData');
         if (savedData) {
           const data = JSON.parse(savedData);
           if (data.config) setConfig(data.config);
-          if (data.heroImages) setHeroImages(data.heroImages);
-          if (data.news) setNews(data.news);
-          if (data.events) setEvents(data.events);
-          if (data.albums) setAlbums(data.albums);
-          if (data.team) setTeam(data.team);
-          if (data.ouderwerkgroep) setOuderwerkgroep(data.ouderwerkgroep);
-          if (data.submissions) setSubmissions(data.submissions);
-          if (data.pages) setPages(data.pages);
-          if (data.downloads) setDownloads(data.downloads);
-          if (data.enrollments) setEnrollments(data.enrollments);
+          if (data.heroImages && data.heroImages.length > 0) setHeroImages(data.heroImages);
+          if (data.news && data.news.length > 0) setNews(data.news);
+          if (data.events && data.events.length > 0) setEvents(data.events);
+          if (data.albums && data.albums.length > 0) setAlbums(data.albums);
+          if (data.team && data.team.length > 0) setTeam(data.team);
+          if (data.ouderwerkgroep && data.ouderwerkgroep.length > 0) setOuderwerkgroep(data.ouderwerkgroep);
+          if (data.submissions && data.submissions.length > 0) setSubmissions(data.submissions);
+          if (data.pages && data.pages.length > 0) setPages(data.pages);
+          if (data.downloads && data.downloads.length > 0) setDownloads(data.downloads);
+          if (data.enrollments && data.enrollments.length > 0) setEnrollments(data.enrollments);
         }
       } catch (e) {
-        console.log('Geen opgeslagen data gevonden');
+        console.log('Geen opgeslagen data gevonden, gebruik mock data');
       }
       setLoading(false);
-      showToast('⚠️ Admin werkt alleen lokaal met de backend server', 'error');
+      showToast('ℹ️ Gebruikt lokale data. Start de server voor volledige functionaliteit.', 'success');
       return;
     }
 
     try {
       const response = await fetch(`${API_BASE}/data`);
+      if (!response.ok) {
+        throw new Error(`Server responded with ${response.status}`);
+      }
       const data = await response.json();
-      setConfig(data.config);
-      setHeroImages(data.heroImages || []);
-      setNews(data.news || []);
-      setEvents(data.events || []);
-      setAlbums(data.albums || []);
-      setTeam(data.team || []);
-      setOuderwerkgroep(data.ouderwerkgroep || []);
-      setSubmissions(data.submissions || []);
-      if (data.pages) setPages(data.pages);
-      setDownloads(data.downloads || []);
-      setEnrollments(data.enrollments || []);
+      if (data.config) setConfig(data.config);
+      if (data.heroImages && data.heroImages.length > 0) setHeroImages(data.heroImages);
+      if (data.news && data.news.length > 0) setNews(data.news);
+      if (data.events && data.events.length > 0) setEvents(data.events);
+      if (data.albums && data.albums.length > 0) setAlbums(data.albums);
+      if (data.team && data.team.length > 0) setTeam(data.team);
+      if (data.ouderwerkgroep && data.ouderwerkgroep.length > 0) setOuderwerkgroep(data.ouderwerkgroep);
+      if (data.submissions && data.submissions.length > 0) setSubmissions(data.submissions);
+      if (data.pages && data.pages.length > 0) setPages(data.pages);
+      if (data.downloads && data.downloads.length > 0) setDownloads(data.downloads);
+      if (data.enrollments && data.enrollments.length > 0) setEnrollments(data.enrollments);
       setLoading(false);
+      showToast('✅ Data succesvol geladen!', 'success');
     } catch (error) {
       console.error('Error fetching data:', error);
+      // Keep mock data as fallback
+      showToast('⚠️ Server niet bereikbaar. Gebruikt mock data. Start de server met: npm run server', 'error');
       setLoading(false);
-      showToast('Kon data niet laden. Start de server met: npm run server', 'error');
     }
   };
 

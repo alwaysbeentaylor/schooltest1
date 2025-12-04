@@ -10,56 +10,8 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <!-- Navigation -->
-  <nav class="navbar">
-    <div class="navbar-container">
-      <a href="index.html" class="navbar-brand">
-        <div class="navbar-logo">
-          <img src="/images/logo.png" alt="VBS Sint-Maarten Logo">
-        </div>
-        <div>
-          <h1 class="navbar-title">Sint-Maarten</h1>
-          <p class="navbar-subtitle">Vrije Basisschool Sijsele</p>
-        </div>
-      </a>
-      
-      <div class="navbar-menu">
-        <a href="index.html" class="nav-link">Home</a>
-        <a href="about.html" class="nav-link">Onze School</a>
-        <a href="enroll.html" class="nav-link active">Inschrijven</a>
-        <a href="team.html" class="nav-link">Team</a>
-        <a href="news.html" class="nav-link">Nieuws</a>
-        <a href="calendar.html" class="nav-link">Agenda</a>
-        <a href="info.html" class="nav-link">Info</a>
-        <a href="ouderwerkgroep.html" class="nav-link">Ouderwerkgroep</a>
-        <a href="gallery.html" class="nav-link">Foto's</a>
-        <a href="contact.html" class="nav-link">Contact</a>
-        <a href="box.html" class="nav-cta">⭐ Box</a>
-      </div>
-      
-      <button class="mobile-menu-btn">
-        <div class="hamburger">
-          <span></span>
-          <span></span>
-          <span></span>
-        </div>
-      </button>
-    </div>
-    
-    <div class="mobile-menu">
-      <a href="index.html" class="nav-link">Home</a>
-      <a href="about.html" class="nav-link">Onze School</a>
-      <a href="enroll.html" class="nav-link active">Inschrijven</a>
-      <a href="team.html" class="nav-link">Team</a>
-      <a href="news.html" class="nav-link">Nieuws</a>
-      <a href="calendar.html" class="nav-link">Agenda</a>
-      <a href="info.html" class="nav-link">Info</a>
-      <a href="ouderwerkgroep.html" class="nav-link">Ouderwerkgroep</a>
-      <a href="gallery.html" class="nav-link">Foto's</a>
-      <a href="contact.html" class="nav-link">Contact</a>
-      <a href="box.html" class="nav-cta">⭐ Belevingsbox Aanvragen</a>
-    </div>
-  </nav>
+  <!-- Navigation wordt geladen via components.js -->
+  <div data-nav></div>
 
   <main>
     <section class="section">
@@ -147,67 +99,14 @@
     </section>
   </main>
 
-  <!-- Footer -->
-  <footer class="footer">
-    <div class="footer-grid">
-      <div>
-        <div class="footer-brand">
-          <img src="/images/logo.png" alt="VBS Sint-Maarten">
-          <h3>VBS Sint-Maarten</h3>
-        </div>
-        <p class="footer-text">
-          Een school met een hart voor elk kind.<br>
-          Samen groeien, samen leren, samen leven.
-        </p>
-      </div>
-      
-      <div>
-        <h3>Contact</h3>
-        <ul class="footer-contact">
-          <li>
-            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
-            Kloosterstraat 4a, 8340 Sijsele
-          </li>
-          <li>
-            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
-            info@vrijebasisschoolsijsele.be
-          </li>
-          <li>
-            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
-            Kloosterstraat: 050 36 32 25
-          </li>
-        </ul>
-      </div>
-      
-      <div>
-        <h3>Snel naar</h3>
-        <ul>
-          <li><a href="calendar.html">Kalender</a></li>
-          <li><a href="info.html">Praktische Info</a></li>
-          <li><a href="ouderwerkgroep.html">Ouderwerkgroep</a></li>
-          <li><a href="gallery.html">Fotogalerij</a></li>
-        </ul>
-      </div>
-      
-      <div>
-        <h3>Admin</h3>
-        <a href="../index.html" class="admin-btn">
-          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-          Inloggen Beheerder
-        </a>
-      </div>
-    </div>
-    
-    <div class="footer-bottom">
-      <span>&copy; 2025 VBS Sint-Maarten Sijsele</span>
-    </div>
-  </footer>
+  <!-- Footer wordt geladen via components.js -->
+  <div data-footer></div>
 
-  <!-- Accessibility Button -->
-  <button class="accessibility-btn" onclick="toggleLargeText()" title="Groot lettertype">
-    <span>A</span>
-  </button>
+  <!-- Accessibility Button wordt geladen via components.js -->
+  <div data-accessibility></div>
 
+  <!-- Laad eerst componenten, dan main.js -->
+  <script src="js/components.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>
