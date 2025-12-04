@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fotogalerij - VBS Sint-Maarten Sijsele</title>
+  <meta name="description" content="Bekijk foto's van activiteiten en het schoolleven bij VBS Sint-Maarten in Sijsele.">
+  <link rel="icon" type="image/png" href="/images/logo.png">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+    }
+    
+    .album-card {
+      background: white;
+      border-radius: 1.5rem;
+      overflow: hidden;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--gray-100);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .album-card:hover {
+      box-shadow: var(--shadow-xl);
+      transform: translateY(-8px);
+    }
+    
+    .album-card-image {
+      position: relative;
+      height: 250px;
+      overflow: hidden;
+    }
+    
+    .album-card-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.7s ease;
+    }
+    
+    .album-card:hover .album-card-image img {
+      transform: scale(1.1);
+    }
+    
+    .album-card-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.7), transparent, transparent);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .album-card:hover .album-card-overlay {
+      opacity: 1;
+    }
+    
+    .album-card-count {
+      position: absolute;
+      top: 0.75rem;
+      right: 0.75rem;
+      background: var(--school-green);
+      color: white;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    
+    .album-card-body {
+      padding: 1.5rem;
+      background: linear-gradient(to bottom, white, var(--gray-50));
+    }
+    
+    .album-card-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--gray-900);
+      margin-bottom: 0.25rem;
+      transition: color 0.3s ease;
+    }
+    
+    .album-card:hover .album-card-title {
+      color: var(--school-green);
+    }
+    
+    .album-card-location {
+      font-size: 0.875rem;
+      color: var(--gray-500);
+    }
+    
+    .lightbox-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.95);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .lightbox-overlay.active {
+      display: flex;
+    }
+    
+    .lightbox-close {
+      position: absolute;
+      top: 1rem;
+      right: 1rem;
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 2rem;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.3s;
+      z-index: 101;
+    }
+    
+    .lightbox-close:hover {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+    }
+    
+    .lightbox-prev,
+    .lightbox-next {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      color: rgba(255, 255, 255, 0.8);
+      font-size: 2rem;
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.3s;
+      z-index: 101;
+    }
+    
+    .lightbox-prev { left: 1rem; }
+    .lightbox-next { right: 1rem; }
+    
+    .lightbox-prev:hover,
+    .lightbox-next:hover {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+    }
+    
+    .lightbox-image {
+      max-width: 90vw;
+      max-height: 85vh;
+      object-fit: contain;
+      border-radius: 0.5rem;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+    }
+    
+    .lightbox-counter {
+      position: absolute;
+      top: 1rem;
+      left: 1rem;
+      background: rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.8);
+      padding: 0.5rem 1rem;
+      border-radius: 9999px;
+      font-weight: 500;
+    }
+    
+    @media (max-width: 1024px) {
+      .gallery-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 640px) {
+      .gallery-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="navbar-container">
+      <a href="index.html" class="navbar-brand">
+        <div class="navbar-logo">
+          <img src="/images/logo.png" alt="VBS Sint-Maarten Logo">
+        </div>
+        <div>
+          <h1 class="navbar-title">Sint-Maarten</h1>
+          <p class="navbar-subtitle">Vrije Basisschool Sijsele</p>
+        </div>
+      </a>
+      
+      <div class="navbar-menu">
+        <a href="index.html" class="nav-link">Home</a>
+        <a href="about.html" class="nav-link">Onze School</a>
+        <a href="enroll.html" class="nav-link">Inschrijven</a>
+        <a href="team.html" class="nav-link">Team</a>
+        <a href="news.html" class="nav-link">Nieuws</a>
+        <a href="calendar.html" class="nav-link">Agenda</a>
+        <a href="info.html" class="nav-link">Info</a>
+        <a href="ouderwerkgroep.html" class="nav-link">Ouderwerkgroep</a>
+        <a href="gallery.html" class="nav-link active">Foto's</a>
+        <a href="contact.html" class="nav-link">Contact</a>
+        <a href="box.html" class="nav-cta">⭐ Box</a>
+      </div>
+      
+      <button class="mobile-menu-btn">
+        <div class="hamburger">
+          <span></span>
+          <span></span>
+          <span></span>
+        </div>
+      </button>
+    </div>
+    
+    <div class="mobile-menu">
+      <a href="index.html" class="nav-link">Home</a>
+      <a href="about.html" class="nav-link">Onze School</a>
+      <a href="enroll.html" class="nav-link">Inschrijven</a>
+      <a href="team.html" class="nav-link">Team</a>
+      <a href="news.html" class="nav-link">Nieuws</a>
+      <a href="calendar.html" class="nav-link">Agenda</a>
+      <a href="info.html" class="nav-link">Info</a>
+      <a href="ouderwerkgroep.html" class="nav-link">Ouderwerkgroep</a>
+      <a href="gallery.html" class="nav-link active">Foto's</a>
+      <a href="contact.html" class="nav-link">Contact</a>
+      <a href="box.html" class="nav-cta">⭐ Belevingsbox Aanvragen</a>
+    </div>
+  </nav>
+
+  <main>
+    <section class="section">
+      <div class="container">
+        <div class="text-center mb-12">
+          <div style="display: flex; justify-content: center; margin-bottom: 1.5rem;">
+            <div style="background: rgba(5, 150, 105, 0.1); padding: 1rem; border-radius: 50%;">
+              <svg width="40" height="40" fill="none" stroke="var(--school-green)" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+              </svg>
+            </div>
+          </div>
+          <h1 style="font-size: 3rem; margin-bottom: 1.5rem;">Fotogalerij</h1>
+          <p style="color: var(--gray-600); max-width: 600px; margin: 0 auto; font-size: 1.25rem;">
+            Beleef mee met de mooie momenten op onze school
+          </p>
+        </div>
+        
+        <div class="gallery-grid">
+          <!-- Album 1 -->
+          <div class="album-card" onclick="openAlbum(['/images/gallery/bibliotheek-1.jpeg', '/images/gallery/bibliotheek-3.jpeg', '/images/gallery/bibliotheek-5.jpeg'])">
+            <div class="album-card-image">
+              <img src="/images/gallery/bibliotheek-1.jpeg" alt="Spelen in de herfstzon">
+              <div class="album-card-overlay"></div>
+              <span class="album-card-count">3 📸</span>
+            </div>
+            <div class="album-card-body">
+              <h3 class="album-card-title">Spelen in de herfstzon</h3>
+              <p class="album-card-location">Kleuter Klooster</p>
+            </div>
+          </div>
+          
+          <!-- Album 2 -->
+          <div class="album-card" onclick="openAlbum(['/images/gallery/bibliotheek-3.jpeg', '/images/gallery/bibliotheek-5.jpeg'])">
+            <div class="album-card-image">
+              <img src="/images/gallery/bibliotheek-3.jpeg" alt="Creatieve Workshops">
+              <div class="album-card-overlay"></div>
+              <span class="album-card-count">2 📸</span>
+            </div>
+            <div class="album-card-body">
+              <h3 class="album-card-title">Creatieve Workshops</h3>
+              <p class="album-card-location">Kleuter Klooster</p>
+            </div>
+          </div>
+          
+          <!-- Album 3 -->
+          <div class="album-card" onclick="openAlbum(['/images/gallery/bibliotheek-7.jpeg', '/images/gallery/bibliotheek-9.jpeg', '/images/gallery/bibliotheek-11.jpeg'])">
+            <div class="album-card-image">
+              <img src="/images/gallery/bibliotheek-7.jpeg" alt="Activiteiten 2023">
+              <div class="album-card-overlay"></div>
+              <span class="album-card-count">3 📸</span>
+            </div>
+            <div class="album-card-body">
+              <h3 class="album-card-title">Activiteiten 2023</h3>
+              <p class="album-card-location">Lager</p>
+            </div>
+          </div>
+          
+          <!-- Album 4 -->
+          <div class="album-card" onclick="openAlbum(['/images/gallery/bibliotheek-9.jpeg', '/images/gallery/bibliotheek-11.jpeg'])">
+            <div class="album-card-image">
+              <img src="/images/gallery/bibliotheek-9.jpeg" alt="Sportdag">
+              <div class="album-card-overlay"></div>
+              <span class="album-card-count">2 📸</span>
+            </div>
+            <div class="album-card-body">
+              <h3 class="album-card-title">Sportdag</h3>
+              <p class="album-card-location">Lager</p>
+            </div>
+          </div>
+          
+          <!-- Album 5 -->
+          <div class="album-card" onclick="openAlbum(['/images/gallery/bibliotheek-1.jpeg', '/images/gallery/bibliotheek-7.jpeg'])">
+            <div class="album-card-image">
+              <img src="/images/gallery/bibliotheek-1.jpeg" alt="Ontdekkingstocht">
+              <div class="album-card-overlay"></div>
+              <span class="album-card-count">2 📸</span>
+            </div>
+            <div class="album-card-body">
+              <h3 class="album-card-title">Ontdekkingstocht</h3>
+              <p class="album-card-location">Verrekijker</p>
+            </div>
+          </div>
+          
+          <!-- Album 6 -->
+          <div class="album-card" onclick="openAlbum(['/images/gallery/bibliotheek-11.jpeg', '/images/gallery/bibliotheek-1.jpeg', '/images/gallery/bibliotheek-7.jpeg'])">
+            <div class="album-card-image">
+              <img src="/images/gallery/bibliotheek-11.jpeg" alt="Schoolfeest 2023">
+              <div class="album-card-overlay"></div>
+              <span class="album-card-count">3 📸</span>
+            </div>
+            <div class="album-card-body">
+              <h3 class="album-card-title">Schoolfeest 2023</h3>
+              <p class="album-card-location">Algemeen</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Lightbox -->
+  <div class="lightbox-overlay" id="lightbox">
+    <button class="lightbox-close" onclick="closeLightbox()">&times;</button>
+    <button class="lightbox-prev" onclick="prevImage()">&#8249;</button>
+    <img class="lightbox-image" id="lightbox-image" src="" alt="Foto">
+    <button class="lightbox-next" onclick="nextImage()">&#8250;</button>
+    <div class="lightbox-counter" id="lightbox-counter"></div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-grid">
+      <div>
+        <div class="footer-brand">
+          <img src="/images/logo.png" alt="VBS Sint-Maarten">
+          <h3>VBS Sint-Maarten</h3>
+        </div>
+        <p class="footer-text">
+          Een school met een hart voor elk kind.<br>
+          Samen groeien, samen leren, samen leven.
+        </p>
+      </div>
+      
+      <div>
+        <h3>Contact</h3>
+        <ul class="footer-contact">
+          <li>
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+            Kloosterstraat 4a, 8340 Sijsele
+          </li>
+          <li>
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path><polyline points="22,6 12,13 2,6"></polyline></svg>
+            info@vrijebasisschoolsijsele.be
+          </li>
+          <li>
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+            Kloosterstraat: 050 36 32 25
+          </li>
+        </ul>
+      </div>
+      
+      <div>
+        <h3>Snel naar</h3>
+        <ul>
+          <li><a href="calendar.html">Kalender</a></li>
+          <li><a href="info.html">Praktische Info</a></li>
+          <li><a href="enroll.html">Inschrijven</a></li>
+          <li><a href="ouderwerkgroep.html">Ouderwerkgroep</a></li>
+          <li><a href="index.html">Home</a></li>
+        </ul>
+      </div>
+      
+      <div>
+        <h3>Admin</h3>
+        <a href="../index.html" class="admin-btn">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          Inloggen Beheerder
+        </a>
+      </div>
+    </div>
+    
+    <div class="footer-bottom">
+      <span>&copy; 2025 VBS Sint-Maarten Sijsele</span>
+    </div>
+  </footer>
+
+  <!-- Accessibility Button -->
+  <button class="accessibility-btn" onclick="toggleLargeText()" title="Groot lettertype">
+    <span>A</span>
+  </button>
+
+  <script src="js/main.js"></script>
+  <script>
+    let currentImages = [];
+    let currentIndex = 0;
+    
+    function openAlbum(images) {
+      currentImages = images;
+      currentIndex = 0;
+      updateLightbox();
+      document.getElementById('lightbox').classList.add('active');
+      document.body.style.overflow = 'hidden';
+    }
+    
+    function closeLightbox() {
+      document.getElementById('lightbox').classList.remove('active');
+      document.body.style.overflow = '';
+    }
+    
+    function updateLightbox() {
+      document.getElementById('lightbox-image').src = currentImages[currentIndex];
+      document.getElementById('lightbox-counter').textContent = `${currentIndex + 1} / ${currentImages.length}`;
+    }
+    
+    function nextImage() {
+      currentIndex = (currentIndex + 1) % currentImages.length;
+      updateLightbox();
+    }
+    
+    function prevImage() {
+      currentIndex = (currentIndex - 1 + currentImages.length) % currentImages.length;
+      updateLightbox();
+    }
+    
+    // Keyboard navigation
+    document.addEventListener('keydown', function(e) {
+      if (!document.getElementById('lightbox').classList.contains('active')) return;
+      if (e.key === 'Escape') closeLightbox();
+      if (e.key === 'ArrowRight') nextImage();
+      if (e.key === 'ArrowLeft') prevImage();
+    });
+    
+    // Close on overlay click
+    document.getElementById('lightbox').addEventListener('click', function(e) {
+      if (e.target === this) closeLightbox();
+    });
+  </script>
+</body>
+</html>
+

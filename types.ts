@@ -38,7 +38,6 @@ export type PageView =
   | 'home'
   | 'about'
   | 'enroll'
-  | 'team'
   | 'news'
   | 'calendar'
   | 'info'
@@ -46,6 +45,7 @@ export type PageView =
   | 'contact'
   | 'gallery'
   | 'box'
+  | 'menu'
   | 'admin';
 
 export interface FormSubmission {
@@ -96,4 +96,85 @@ export interface PageConfig {
   // Content fields for custom pages
   content?: string;
   pageImages?: string[];
+}
+
+// Inschrijvingsformulier types
+export interface Enrollment {
+  id: string;
+  submittedAt: string;
+  status: 'nieuw' | 'in_behandeling' | 'gerealiseerd' | 'niet_gerealiseerd';
+  
+  // Stap 1 - Basisgegevens Kind
+  inschrijvingsDatum: string;
+  schooljaar: '2024 - 2025' | '2025 - 2026' | '2026 - 2027';
+  afdeling: 'kleuter Kloosterstraat' | 'kleuter Hovingenlaan' | 'lager Kloosterstraat';
+  naamKind: string;
+  voornaamKind: string;
+  adres: string;
+  geboortedatumKind: string;
+  geboorteplaatsKind: string;
+  bewijsGeboortedatum: 'Kids ID' | 'ISI+ kaart' | 'Anders';
+  bewijsGeboortedatumAnders?: string;
+  rijksregisternummerKind: string;
+  geslacht: 'M' | 'V' | 'X';
+  nationaliteit: 'Belg' | 'Nederlander' | 'Anders';
+  nationaliteitAnders?: string;
+  
+  // Stap 2 - Gezinssituatie
+  isOudsteGezin: boolean;
+  andereKinderen?: string;
+  bankrekening: string;
+  telefoonVast?: string;
+  gsmPapa?: string;
+  gsmMama?: string;
+  grootoudersPapa?: string;
+  grootoudersMama?: string;
+  werkPapa?: string;
+  werkMama?: string;
+  emailPapa?: string;
+  emailMama?: string;
+  
+  // Stap 3 - Gegevens Papa
+  naamPapa: string;
+  geboortedatumPapa: string;
+  geboorteplaatsPapa: string;
+  rijksregisternummerPapa: string;
+  leerplichtverantwoordelijkePapa: '1' | '2';
+  beroepPapa?: string;
+  opleidingsniveauPapa: string;
+  
+  // Stap 3 - Gegevens Mama
+  naamMama: string;
+  geboortedatumMama: string;
+  geboorteplaatsMama: string;
+  rijksregisternummerMama: string;
+  leerplichtverantwoordelijkeMama: '1' | '2';
+  beroepMama?: string;
+  opleidingsniveauMama: string;
+  
+  // Stap 4 - Medisch & Praktisch
+  huisarts: string;
+  ziekenhuis: 'AZ Sint-Lucas' | 'AZ Sint-Jan';
+  allergieenZiektes?: string;
+  
+  // Stap 5 - Verklaring & Bevestiging
+  akkoordReglement: boolean;
+  eersteSchooldag: string;
+  startKlas?: string;
+  anderstaligNieuwkomer: boolean;
+  verslagBuitengewoonOnderwijs: boolean;
+  broerZusIngeschreven: boolean;
+  personeelslid: boolean;
+  vorigeSchool?: string;
+  ondertekeningNaam: string;
+  ondertekeningDatum: string;
+  ondertekeningUur: string;
+  
+  // Stap 6 - Taalvragenlijst
+  taalMoeder: 'Nederlands' | 'Frans' | 'Een andere taal' | 'Niet van toepassing';
+  taalVader: 'Nederlands' | 'Frans' | 'Een andere taal' | 'Niet van toepassing';
+  taalBroersZussen: 'Nederlands' | 'Frans' | 'Een andere taal' | 'Niet van toepassing';
+  taalVrienden: 'Nederlands' | 'Frans' | 'Een andere taal' | 'Weet niet';
+  bevestigingOpEerDatum: string;
+  bevestigingOpEerNaam: string;
 }

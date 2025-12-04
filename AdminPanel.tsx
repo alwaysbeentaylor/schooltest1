@@ -5,11 +5,15 @@ import {
   ChevronRight, Image as ImageIcon, Star, Bell, TrendingUp,
   Palette, Layout, Mail, Phone, MapPin, ExternalLink, Check,
   AlertCircle, Loader2, Grid, List, Clock, Tag, Menu, Power,
-  ToggleLeft, ToggleRight, GripVertical, FileEdit
+  ToggleLeft, ToggleRight, GripVertical, FileEdit, Download, ClipboardList,
+  User, Baby, Building2, Stethoscope, Languages, ChevronDown, ChevronUp, RefreshCw
 } from 'lucide-react';
 import { generateNewsContent } from './services/geminiService';
 
-const API_BASE = 'http://localhost:3001/api';
+// Detecteer of we lokaal of in productie draaien
+const API_BASE = window.location.hostname === 'localhost' 
+  ? 'http://localhost:3001/api' 
+  : ''; // Laat leeg voor productie - we gebruiken mock data
 
 // Types
 interface NewsItem {
@@ -71,6 +75,72 @@ interface Download {
   filename: string;
   originalName?: string;
   uploadDate: string;
+}
+
+interface Enrollment {
+  id: string;
+  submittedAt: string;
+  status: 'nieuw' | 'in_behandeling' | 'gerealiseerd' | 'niet_gerealiseerd';
+  inschrijvingsDatum: string;
+  schooljaar: string;
+  afdeling: string;
+  naamKind: string;
+  voornaamKind: string;
+  adres: string;
+  geboortedatumKind: string;
+  geboorteplaatsKind: string;
+  bewijsGeboortedatum: string;
+  bewijsGeboortedatumAnders?: string;
+  rijksregisternummerKind: string;
+  geslacht: string;
+  nationaliteit: string;
+  nationaliteitAnders?: string;
+  isOudsteGezin: boolean;
+  andereKinderen?: string;
+  bankrekening: string;
+  telefoonVast?: string;
+  gsmPapa?: string;
+  gsmMama?: string;
+  grootoudersPapa?: string;
+  grootoudersMama?: string;
+  werkPapa?: string;
+  werkMama?: string;
+  emailPapa?: string;
+  emailMama?: string;
+  naamPapa: string;
+  geboortedatumPapa: string;
+  geboorteplaatsPapa: string;
+  rijksregisternummerPapa: string;
+  leerplichtverantwoordelijkePapa: string;
+  beroepPapa?: string;
+  opleidingsniveauPapa: string;
+  naamMama: string;
+  geboortedatumMama: string;
+  geboorteplaatsMama: string;
+  rijksregisternummerMama: string;
+  leerplichtverantwoordelijkeMama: string;
+  beroepMama?: string;
+  opleidingsniveauMama: string;
+  huisarts: string;
+  ziekenhuis: string;
+  allergieenZiektes?: string;
+  akkoordReglement: boolean;
+  eersteSchooldag: string;
+  startKlas?: string;
+  anderstaligNieuwkomer: boolean;
+  verslagBuitengewoonOnderwijs: boolean;
+  broerZusIngeschreven: boolean;
+  personeelslid: boolean;
+  vorigeSchool?: string;
+  ondertekeningNaam: string;
+  ondertekeningDatum: string;
+  ondertekeningUur: string;
+  taalMoeder: string;
+  taalVader: string;
+  taalBroersZussen: string;
+  taalVrienden: string;
+  bevestigingOpEerDatum: string;
+  bevestigingOpEerNaam: string;
 }
 
 interface SiteConfig {
@@ -598,18 +668,365 @@ const CalendarSection = ({
   );
 };
 
+// Enrollments Section Component
+const EnrollmentsSection = ({
+  enrollments,
+  onRefresh,
+  onUpdateStatus,
+  onDelete
+}: {
+  enrollments: Enrollment[];
+  onRefresh?: () => void;
+  onUpdateStatus: (id: string, status: Enrollment['status']) => void;
+  onDelete: (id: string) => void;
+}) => {
+  const [selectedEnrollment, setSelectedEnrollment] = useState<Enrollment | null>(null);
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  const statusColors = {
+    nieuw: 'bg-blue-100 text-blue-800 border-blue-200',
+    in_behandeling: 'bg-yellow-100 text-yellow-800 border-yellow-200',
+    gerealiseerd: 'bg-green-100 text-green-800 border-green-200',
+    niet_gerealiseerd: 'bg-red-100 text-red-800 border-red-200'
+  };
+
+  const statusLabels = {
+    nieuw: 'Nieuw',
+    in_behandeling: 'In behandeling',
+    gerealiseerd: 'Gerealiseerd',
+    niet_gerealiseerd: 'Niet gerealiseerd'
+  };
+
+  const filteredEnrollments = enrollments
+    .filter(e => filterStatus === 'all' || e.status === filterStatus)
+    .filter(e => {
+      if (!searchTerm) return true;
+      const search = searchTerm.toLowerCase();
+      return (
+        e.naamKind?.toLowerCase().includes(search) ||
+        e.voornaamKind?.toLowerCase().includes(search) ||
+        e.naamPapa?.toLowerCase().includes(search) ||
+        e.naamMama?.toLowerCase().includes(search)
+      );
+    })
+    .sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
+
+  const generatePDF = (enrollment: Enrollment) => {
+    // Create a printable version
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Inschrijving - ${enrollment.voornaamKind} ${enrollment.naamKind}</title>
+        <style>
+          body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; }
+          h1 { color: #1e40af; border-bottom: 2px solid #1e40af; padding-bottom: 10px; }
+          h2 { color: #166534; margin-top: 30px; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
+          .section { margin-bottom: 20px; }
+          .row { display: flex; margin-bottom: 8px; }
+          .label { font-weight: bold; width: 200px; color: #374151; }
+          .value { flex: 1; }
+          .header { text-align: center; margin-bottom: 30px; }
+          .logo { font-size: 24px; font-weight: bold; color: #166534; }
+          .status { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: bold; }
+          .status-nieuw { background: #dbeafe; color: #1e40af; }
+          .status-in_behandeling { background: #fef3c7; color: #92400e; }
+          .status-gerealiseerd { background: #d1fae5; color: #065f46; }
+          .status-niet_gerealiseerd { background: #fee2e2; color: #991b1b; }
+          @media print { body { padding: 20px; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="logo">VBS Sint-Maarten Sijsele</div>
+          <h1>Inschrijvingsformulier</h1>
+          <p>Ingediend op: ${new Date(enrollment.submittedAt).toLocaleDateString('nl-BE')} om ${new Date(enrollment.submittedAt).toLocaleTimeString('nl-BE')}</p>
+          <span class="status status-${enrollment.status}">${statusLabels[enrollment.status]}</span>
+        </div>
+
+        <h2>Basisgegevens Kind</h2>
+        <div class="section">
+          <div class="row"><span class="label">Naam:</span><span class="value">${enrollment.naamKind} ${enrollment.voornaamKind}</span></div>
+          <div class="row"><span class="label">Geboortedatum:</span><span class="value">${enrollment.geboortedatumKind}</span></div>
+          <div class="row"><span class="label">Geboorteplaats:</span><span class="value">${enrollment.geboorteplaatsKind}</span></div>
+          <div class="row"><span class="label">Rijksregisternummer:</span><span class="value">${enrollment.rijksregisternummerKind}</span></div>
+          <div class="row"><span class="label">Geslacht:</span><span class="value">${enrollment.geslacht}</span></div>
+          <div class="row"><span class="label">Nationaliteit:</span><span class="value">${enrollment.nationaliteit}${enrollment.nationaliteitAnders ? ` (${enrollment.nationaliteitAnders})` : ''}</span></div>
+          <div class="row"><span class="label">Adres:</span><span class="value">${enrollment.adres}</span></div>
+          <div class="row"><span class="label">Schooljaar:</span><span class="value">${enrollment.schooljaar}</span></div>
+          <div class="row"><span class="label">Afdeling:</span><span class="value">${enrollment.afdeling}</span></div>
+          <div class="row"><span class="label">Bewijs geboortedatum:</span><span class="value">${enrollment.bewijsGeboortedatum}${enrollment.bewijsGeboortedatumAnders ? ` (${enrollment.bewijsGeboortedatumAnders})` : ''}</span></div>
+        </div>
+
+        <h2>Gezinssituatie</h2>
+        <div class="section">
+          <div class="row"><span class="label">Oudste van gezin:</span><span class="value">${enrollment.isOudsteGezin ? 'Ja' : 'Nee'}</span></div>
+          ${enrollment.andereKinderen ? `<div class="row"><span class="label">Andere kinderen:</span><span class="value">${enrollment.andereKinderen}</span></div>` : ''}
+          <div class="row"><span class="label">Bankrekening:</span><span class="value">${enrollment.bankrekening}</span></div>
+          ${enrollment.telefoonVast ? `<div class="row"><span class="label">Telefoon vast:</span><span class="value">${enrollment.telefoonVast}</span></div>` : ''}
+          ${enrollment.gsmPapa ? `<div class="row"><span class="label">GSM papa:</span><span class="value">${enrollment.gsmPapa}</span></div>` : ''}
+          ${enrollment.gsmMama ? `<div class="row"><span class="label">GSM mama:</span><span class="value">${enrollment.gsmMama}</span></div>` : ''}
+          ${enrollment.emailPapa ? `<div class="row"><span class="label">Email papa:</span><span class="value">${enrollment.emailPapa}</span></div>` : ''}
+          ${enrollment.emailMama ? `<div class="row"><span class="label">Email mama:</span><span class="value">${enrollment.emailMama}</span></div>` : ''}
+        </div>
+
+        <h2>Gegevens Papa</h2>
+        <div class="section">
+          <div class="row"><span class="label">Naam:</span><span class="value">${enrollment.naamPapa}</span></div>
+          <div class="row"><span class="label">Geboortedatum:</span><span class="value">${enrollment.geboortedatumPapa}</span></div>
+          <div class="row"><span class="label">Geboorteplaats:</span><span class="value">${enrollment.geboorteplaatsPapa}</span></div>
+          <div class="row"><span class="label">Rijksregisternummer:</span><span class="value">${enrollment.rijksregisternummerPapa}</span></div>
+          <div class="row"><span class="label">Leerplichtverantwoordelijke:</span><span class="value">${enrollment.leerplichtverantwoordelijkePapa}</span></div>
+          ${enrollment.beroepPapa ? `<div class="row"><span class="label">Beroep:</span><span class="value">${enrollment.beroepPapa}</span></div>` : ''}
+          <div class="row"><span class="label">Opleidingsniveau:</span><span class="value">${enrollment.opleidingsniveauPapa}</span></div>
+        </div>
+
+        <h2>Gegevens Mama</h2>
+        <div class="section">
+          <div class="row"><span class="label">Naam:</span><span class="value">${enrollment.naamMama}</span></div>
+          <div class="row"><span class="label">Geboortedatum:</span><span class="value">${enrollment.geboortedatumMama}</span></div>
+          <div class="row"><span class="label">Geboorteplaats:</span><span class="value">${enrollment.geboorteplaatsMama}</span></div>
+          <div class="row"><span class="label">Rijksregisternummer:</span><span class="value">${enrollment.rijksregisternummerMama}</span></div>
+          <div class="row"><span class="label">Leerplichtverantwoordelijke:</span><span class="value">${enrollment.leerplichtverantwoordelijkeMama}</span></div>
+          ${enrollment.beroepMama ? `<div class="row"><span class="label">Beroep:</span><span class="value">${enrollment.beroepMama}</span></div>` : ''}
+          <div class="row"><span class="label">Opleidingsniveau:</span><span class="value">${enrollment.opleidingsniveauMama}</span></div>
+        </div>
+
+        <h2>Medische Informatie</h2>
+        <div class="section">
+          <div class="row"><span class="label">Huisarts:</span><span class="value">${enrollment.huisarts}</span></div>
+          <div class="row"><span class="label">Ziekenhuis voorkeur:</span><span class="value">${enrollment.ziekenhuis}</span></div>
+          ${enrollment.allergieenZiektes ? `<div class="row"><span class="label">Allergieën/Ziektes:</span><span class="value">${enrollment.allergieenZiektes}</span></div>` : ''}
+        </div>
+
+        <h2>Verklaring & Inschrijving</h2>
+        <div class="section">
+          <div class="row"><span class="label">Akkoord reglement:</span><span class="value">${enrollment.akkoordReglement ? 'Ja' : 'Nee'}</span></div>
+          <div class="row"><span class="label">Eerste schooldag:</span><span class="value">${enrollment.eersteSchooldag}</span></div>
+          ${enrollment.startKlas ? `<div class="row"><span class="label">Startklas:</span><span class="value">${enrollment.startKlas}</span></div>` : ''}
+          <div class="row"><span class="label">Anderstalige nieuwkomer:</span><span class="value">${enrollment.anderstaligNieuwkomer ? 'Ja' : 'Nee'}</span></div>
+          <div class="row"><span class="label">Verslag buitengewoon onderwijs:</span><span class="value">${enrollment.verslagBuitengewoonOnderwijs ? 'Ja' : 'Nee'}</span></div>
+          <div class="row"><span class="label">Broer/zus ingeschreven:</span><span class="value">${enrollment.broerZusIngeschreven ? 'Ja' : 'Nee'}</span></div>
+          <div class="row"><span class="label">Personeelslid:</span><span class="value">${enrollment.personeelslid ? 'Ja' : 'Nee'}</span></div>
+          ${enrollment.vorigeSchool ? `<div class="row"><span class="label">Vorige school:</span><span class="value">${enrollment.vorigeSchool}</span></div>` : ''}
+        </div>
+
+        <h2>Ondertekening</h2>
+        <div class="section">
+          <div class="row"><span class="label">Naam:</span><span class="value">${enrollment.ondertekeningNaam}</span></div>
+          <div class="row"><span class="label">Datum:</span><span class="value">${enrollment.ondertekeningDatum}</span></div>
+          <div class="row"><span class="label">Uur:</span><span class="value">${enrollment.ondertekeningUur}</span></div>
+        </div>
+
+        <h2>Taalgebruik (Vlaamse Overheid)</h2>
+        <div class="section">
+          <div class="row"><span class="label">Taal met moeder:</span><span class="value">${enrollment.taalMoeder}</span></div>
+          <div class="row"><span class="label">Taal met vader:</span><span class="value">${enrollment.taalVader}</span></div>
+          <div class="row"><span class="label">Taal met broers/zussen:</span><span class="value">${enrollment.taalBroersZussen}</span></div>
+          <div class="row"><span class="label">Taal met vrienden:</span><span class="value">${enrollment.taalVrienden}</span></div>
+          <div class="row"><span class="label">Bevestiging op eer:</span><span class="value">${enrollment.bevestigingOpEerNaam} - ${enrollment.bevestigingOpEerDatum}</span></div>
+        </div>
+
+        <script>window.print();</script>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(html);
+    printWindow.document.close();
+  };
+
+  return (
+    <div className="space-y-4 md:space-y-6 animate-fade-in">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-800">📋 Inschrijvingen</h2>
+          <p className="text-gray-500 text-sm md:text-base">
+            {filteredEnrollments.length} inschrijving{filteredEnrollments.length !== 1 ? 'en' : ''} gevonden
+          </p>
+        </div>
+        {onRefresh && (
+          <ColorButton 
+            color="green" 
+            size="sm" 
+            icon={<RefreshCw size={18} />} 
+            onClick={onRefresh}
+          >
+            Verversen
+          </ColorButton>
+        )}
+      </div>
+
+      {/* Filters */}
+      <ColorCard>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="🔍 Zoeken op naam..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-4 pr-4 py-2 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none text-sm"
+            />
+          </div>
+          <select
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+            className="w-full px-4 py-2 border-2 border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none text-sm bg-white"
+          >
+            <option value="all">📊 Alle statussen</option>
+            <option value="nieuw">🆕 Nieuw</option>
+            <option value="in_behandeling">⏳ In behandeling</option>
+            <option value="gerealiseerd">✅ Gerealiseerd</option>
+            <option value="niet_gerealiseerd">❌ Niet gerealiseerd</option>
+          </select>
+        </div>
+      </ColorCard>
+
+      {/* Enrollments List */}
+      <ColorCard>
+        {filteredEnrollments.length === 0 ? (
+          <div className="text-center py-12">
+            <ClipboardList size={48} className="mx-auto text-gray-300 mb-4" />
+            <p className="text-gray-500 text-lg">Geen inschrijvingen gevonden</p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {filteredEnrollments.map((enrollment) => (
+              <div key={enrollment.id} className="border-2 border-gray-100 rounded-xl overflow-hidden hover:border-gray-200 transition">
+                {/* Header Row */}
+                <div 
+                  className="flex items-center gap-3 md:gap-4 p-4 bg-gray-50 cursor-pointer"
+                  onClick={() => setExpandedId(expandedId === enrollment.id ? null : enrollment.id)}
+                >
+                  <div className="bg-gradient-to-br from-blue-500 to-indigo-600 p-2 md:p-3 rounded-xl text-white">
+                    <Baby size={20} />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-gray-800 text-sm md:text-base">
+                      {enrollment.voornaamKind} {enrollment.naamKind}
+                    </h3>
+                    <div className="flex flex-wrap gap-2 mt-1">
+                      <span className="text-xs text-gray-500">
+                        {new Date(enrollment.submittedAt).toLocaleDateString('nl-BE')}
+                      </span>
+                      <span className="text-xs text-gray-400">•</span>
+                      <span className="text-xs text-gray-500">{enrollment.afdeling}</span>
+                      <span className="text-xs text-gray-400">•</span>
+                      <span className="text-xs text-gray-500">{enrollment.schooljaar}</span>
+                    </div>
+                  </div>
+                  <span className={`px-3 py-1 rounded-full text-xs font-bold border ${statusColors[enrollment.status]}`}>
+                    {statusLabels[enrollment.status]}
+                  </span>
+                  {expandedId === enrollment.id ? <ChevronUp size={20} className="text-gray-400" /> : <ChevronDown size={20} className="text-gray-400" />}
+                </div>
+
+                {/* Expanded Details */}
+                {expandedId === enrollment.id && (
+                  <div className="p-4 border-t border-gray-100 bg-white animate-fade-in">
+                    {/* Quick Info Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                      <div className="bg-blue-50 p-3 rounded-lg">
+                        <div className="flex items-center gap-2 text-blue-700 mb-2">
+                          <User size={16} />
+                          <span className="font-bold text-sm">Ouders</span>
+                        </div>
+                        <p className="text-sm text-gray-700">{enrollment.naamPapa}</p>
+                        <p className="text-sm text-gray-700">{enrollment.naamMama}</p>
+                      </div>
+                      <div className="bg-green-50 p-3 rounded-lg">
+                        <div className="flex items-center gap-2 text-green-700 mb-2">
+                          <Phone size={16} />
+                          <span className="font-bold text-sm">Contact</span>
+                        </div>
+                        {enrollment.gsmPapa && <p className="text-sm text-gray-700">Papa: {enrollment.gsmPapa}</p>}
+                        {enrollment.gsmMama && <p className="text-sm text-gray-700">Mama: {enrollment.gsmMama}</p>}
+                      </div>
+                      <div className="bg-purple-50 p-3 rounded-lg">
+                        <div className="flex items-center gap-2 text-purple-700 mb-2">
+                          <Mail size={16} />
+                          <span className="font-bold text-sm">Email</span>
+                        </div>
+                        {enrollment.emailPapa && <p className="text-sm text-gray-700 truncate">{enrollment.emailPapa}</p>}
+                        {enrollment.emailMama && <p className="text-sm text-gray-700 truncate">{enrollment.emailMama}</p>}
+                      </div>
+                    </div>
+
+                    {/* More Details */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4 text-sm">
+                      <div>
+                        <span className="text-gray-500">Geboortedatum:</span>
+                        <p className="font-medium">{enrollment.geboortedatumKind}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Eerste schooldag:</span>
+                        <p className="font-medium">{enrollment.eersteSchooldag}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Broer/zus:</span>
+                        <p className="font-medium">{enrollment.broerZusIngeschreven ? 'Ja' : 'Nee'}</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-500">Adres:</span>
+                        <p className="font-medium truncate">{enrollment.adres}</p>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex flex-wrap gap-2 pt-4 border-t border-gray-100">
+                      <select
+                        value={enrollment.status}
+                        onChange={(e) => onUpdateStatus(enrollment.id, e.target.value as Enrollment['status'])}
+                        className="px-3 py-2 border-2 border-gray-200 rounded-lg text-sm bg-white focus:border-blue-500 focus:outline-none"
+                      >
+                        <option value="nieuw">🆕 Nieuw</option>
+                        <option value="in_behandeling">⏳ In behandeling</option>
+                        <option value="gerealiseerd">✅ Gerealiseerd</option>
+                        <option value="niet_gerealiseerd">❌ Niet gerealiseerd</option>
+                      </select>
+                      <button
+                        onClick={() => generatePDF(enrollment)}
+                        className="flex items-center gap-2 px-4 py-2 bg-blue-500 text-white rounded-lg text-sm font-bold hover:bg-blue-600 transition"
+                      >
+                        <Download size={16} />
+                        Download PDF
+                      </button>
+                      <button
+                        onClick={() => onDelete(enrollment.id)}
+                        className="flex items-center gap-2 px-4 py-2 bg-red-100 text-red-600 rounded-lg text-sm font-bold hover:bg-red-200 transition"
+                      >
+                        <Trash2 size={16} />
+                        Verwijderen
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </ColorCard>
+    </div>
+  );
+};
+
 // Default Pages Configuration
 const DEFAULT_PAGES: PageConfig[] = [
   { id: 'home', name: 'Home', slug: 'home', active: true, order: 0, type: 'system' },
   { id: 'about', name: 'Onze School', slug: 'about', active: true, order: 1, type: 'system' },
   { id: 'enroll', name: 'Inschrijven', slug: 'enroll', active: true, order: 2, type: 'system' },
-  { id: 'team', name: 'Team', slug: 'team', active: true, order: 3, type: 'system' },
-  { id: 'news', name: 'Nieuws', slug: 'news', active: true, order: 4, type: 'system' },
-  { id: 'calendar', name: 'Agenda', slug: 'calendar', active: true, order: 5, type: 'system' },
-  { id: 'info', name: 'Info', slug: 'info', active: true, order: 6, type: 'system' },
-  { id: 'ouderwerkgroep', name: 'Ouderwerkgroep', slug: 'ouderwerkgroep', active: true, order: 7, type: 'system' },
-  { id: 'gallery', name: "Foto's", slug: 'gallery', active: true, order: 8, type: 'system' },
-  { id: 'contact', name: 'Contact', slug: 'contact', active: true, order: 9, type: 'system' },
+  { id: 'news', name: 'Nieuws', slug: 'news', active: true, order: 3, type: 'system' },
+  { id: 'calendar', name: 'Agenda', slug: 'calendar', active: true, order: 4, type: 'system' },
+  { id: 'info', name: 'Info', slug: 'info', active: true, order: 5, type: 'system' },
+  { id: 'ouderwerkgroep', name: 'Ouderwerkgroep', slug: 'ouderwerkgroep', active: true, order: 6, type: 'system' },
+  { id: 'gallery', name: "Foto's", slug: 'gallery', active: true, order: 7, type: 'system' },
+  { id: 'contact', name: 'Contact', slug: 'contact', active: true, order: 8, type: 'system' },
 ];
 
 // Main Admin Panel Component
@@ -632,6 +1049,7 @@ export const AdminPanel = () => {
   const [submissions, setSubmissions] = useState<FormSubmission[]>([]);
   const [pages, setPages] = useState<PageConfig[]>(DEFAULT_PAGES);
   const [downloads, setDownloads] = useState<Download[]>([]);
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
 
   // Modal states
   const [showNewsModal, setShowNewsModal] = useState(false);
@@ -655,6 +1073,34 @@ export const AdminPanel = () => {
 
   // Fetch all data
   const fetchData = async () => {
+    // Als we geen API_BASE hebben (productie zonder backend), gebruik localStorage
+    if (!API_BASE) {
+      console.log('Geen backend beschikbaar, gebruik lokale opslag');
+      // Probeer data uit localStorage te laden
+      try {
+        const savedData = localStorage.getItem('adminData');
+        if (savedData) {
+          const data = JSON.parse(savedData);
+          if (data.config) setConfig(data.config);
+          if (data.heroImages) setHeroImages(data.heroImages);
+          if (data.news) setNews(data.news);
+          if (data.events) setEvents(data.events);
+          if (data.albums) setAlbums(data.albums);
+          if (data.team) setTeam(data.team);
+          if (data.ouderwerkgroep) setOuderwerkgroep(data.ouderwerkgroep);
+          if (data.submissions) setSubmissions(data.submissions);
+          if (data.pages) setPages(data.pages);
+          if (data.downloads) setDownloads(data.downloads);
+          if (data.enrollments) setEnrollments(data.enrollments);
+        }
+      } catch (e) {
+        console.log('Geen opgeslagen data gevonden');
+      }
+      setLoading(false);
+      showToast('⚠️ Admin werkt alleen lokaal met de backend server', 'error');
+      return;
+    }
+
     try {
       const response = await fetch(`${API_BASE}/data`);
       const data = await response.json();
@@ -668,11 +1114,12 @@ export const AdminPanel = () => {
       setSubmissions(data.submissions || []);
       if (data.pages) setPages(data.pages);
       setDownloads(data.downloads || []);
+      setEnrollments(data.enrollments || []);
       setLoading(false);
     } catch (error) {
       console.error('Error fetching data:', error);
       setLoading(false);
-      showToast('Kon data niet laden. Is de server gestart?', 'error');
+      showToast('Kon data niet laden. Start de server met: npm run server', 'error');
     }
   };
 
@@ -692,6 +1139,24 @@ export const AdminPanel = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Auto-refresh enrollments when opening the enrollments tab
+  useEffect(() => {
+    if (activeTab === 'enrollments' && isAuthenticated && API_BASE) {
+      const refreshEnrollments = async () => {
+        try {
+          const response = await fetch(`${API_BASE}/enrollments`);
+          if (response.ok) {
+            const data = await response.json();
+            setEnrollments(data);
+          }
+        } catch (error) {
+          console.log('Fout bij ophalen inschrijvingen:', error);
+        }
+      };
+      refreshEnrollments();
+    }
+  }, [activeTab, isAuthenticated]);
 
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type });
@@ -1088,6 +1553,7 @@ export const AdminPanel = () => {
   // Navigation items - Simplified (no Team, no Pages as separate tabs)
   const navItems = [
     { id: 'dashboard', icon: <Home size={20} />, label: 'Dashboard', color: 'from-emerald-500 to-green-600' },
+    { id: 'enrollments', icon: <ClipboardList size={20} />, label: 'Inschrijvingen', color: 'from-blue-500 to-indigo-600', badge: enrollments.filter(e => e.status === 'nieuw').length },
     { id: 'news', icon: <FileText size={20} />, label: 'Nieuws', color: 'from-emerald-500 to-green-600' },
     { id: 'calendar', icon: <Calendar size={20} />, label: 'Kalender', color: 'from-red-500 to-rose-600' },
     { id: 'gallery', icon: <Camera size={20} />, label: "Foto's", color: 'from-emerald-500 to-green-600' },
@@ -1254,6 +1720,52 @@ export const AdminPanel = () => {
               </ColorCard>
             </div>
           </div>
+        )}
+
+        {/* Enrollments Section */}
+        {activeTab === 'enrollments' && (
+          <EnrollmentsSection 
+            enrollments={enrollments}
+            onRefresh={async () => {
+              try {
+                const response = await fetch(`${API_BASE}/enrollments`);
+                if (response.ok) {
+                  const data = await response.json();
+                  setEnrollments(data);
+                  showToast('Data ververst!', 'success');
+                }
+              } catch (error) {
+                showToast('Fout bij verversen', 'error');
+              }
+            }}
+            onUpdateStatus={async (id, status) => {
+              try {
+                const response = await fetch(`${API_BASE}/enrollments/${id}`, {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ status })
+                });
+                if (response.ok) {
+                  setEnrollments(enrollments.map(e => e.id === id ? { ...e, status } : e));
+                  showToast('Status bijgewerkt!', 'success');
+                }
+              } catch (error) {
+                showToast('Fout bij bijwerken status', 'error');
+              }
+            }}
+            onDelete={async (id) => {
+              if (!confirm('Weet je zeker dat je deze inschrijving wilt verwijderen?')) return;
+              try {
+                const response = await fetch(`${API_BASE}/enrollments/${id}`, { method: 'DELETE' });
+                if (response.ok) {
+                  setEnrollments(enrollments.filter(e => e.id !== id));
+                  showToast('Inschrijving verwijderd!', 'success');
+                }
+              } catch (error) {
+                showToast('Fout bij verwijderen', 'error');
+              }
+            }}
+          />
         )}
 
         {/* News Section */}

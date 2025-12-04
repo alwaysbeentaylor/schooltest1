@@ -19,6 +19,15 @@
   ],
   "news": [
     {
+      "id": "1764892089505",
+      "title": "dfggdfgd",
+      "content": "AI configuratie ontbreekt of API key niet gevonden. Controleer je .env settings.",
+      "date": "2025-12-04",
+      "expiryDate": "",
+      "imageUrl": "/images/news/1764892087913-966341578.jpeg",
+      "category": "Algemeen"
+    },
+    {
       "id": "1",
       "title": "Grootoudersfeest was een succes!",
       "content": "Wat hebben we genoten van de massale opkomst. De kleuters hebben hun beste beentje voorgezet. Bekijk zeker de foto's in het album.",
@@ -216,6 +225,71 @@
     }
   ],
   "downloads": [],
+  "enrollments": [
+    {
+      "id": "1764889235471",
+      "submittedAt": "2025-12-04T23:00:35.471Z",
+      "status": "niet_gerealiseerd",
+      "inschrijvingsDatum": "2025-12-04",
+      "schooljaar": "2025 - 2026",
+      "afdeling": "kleuter Kloosterstraat",
+      "naamKind": "",
+      "voornaamKind": "",
+      "adres": "",
+      "geboortedatumKind": "",
+      "geboorteplaatsKind": "",
+      "bewijsGeboortedatum": "Kids ID",
+      "rijksregisternummerKind": "",
+      "geslacht": "M",
+      "nationaliteit": "Belg",
+      "isOudsteGezin": true,
+      "andereKinderen": "",
+      "bankrekening": "",
+      "telefoonVast": "",
+      "gsmPapa": "",
+      "gsmMama": "",
+      "grootoudersPapa": "",
+      "grootoudersMama": "",
+      "werkPapa": "",
+      "werkMama": "",
+      "emailPapa": "",
+      "emailMama": "",
+      "naamPapa": "",
+      "geboortedatumPapa": "",
+      "geboorteplaatsPapa": "",
+      "rijksregisternummerPapa": "",
+      "leerplichtverantwoordelijkePapa": "1",
+      "beroepPapa": "",
+      "opleidingsniveauPapa": "lager onderwijs niet afgewerkt",
+      "naamMama": "",
+      "geboortedatumMama": "",
+      "geboorteplaatsMama": "",
+      "rijksregisternummerMama": "",
+      "leerplichtverantwoordelijkeMama": "1",
+      "beroepMama": "",
+      "opleidingsniveauMama": "lager onderwijs niet afgewerkt",
+      "huisarts": "",
+      "ziekenhuis": "AZ Sint-Lucas",
+      "allergieenZiektes": "",
+      "akkoordReglement": true,
+      "eersteSchooldag": "",
+      "startKlas": "",
+      "anderstaligNieuwkomer": false,
+      "verslagBuitengewoonOnderwijs": false,
+      "broerZusIngeschreven": false,
+      "personeelslid": false,
+      "vorigeSchool": "",
+      "ondertekeningNaam": "",
+      "ondertekeningDatum": "2025-12-04",
+      "ondertekeningUur": "00:00",
+      "taalMoeder": "Nederlands",
+      "taalVader": "Nederlands",
+      "taalBroersZussen": "Nederlands",
+      "taalVrienden": "Nederlands",
+      "bevestigingOpEerDatum": "2025-12-04",
+      "bevestigingOpEerNaam": "WERWERWQ"
+    }
+  ],
   "pages": [
     {
       "id": "home",
@@ -242,19 +316,11 @@
       "type": "system"
     },
     {
-      "id": "team",
-      "name": "Team",
-      "slug": "team",
-      "active": true,
-      "order": 3,
-      "type": "system"
-    },
-    {
       "id": "news",
       "name": "Nieuws",
       "slug": "news",
       "active": true,
-      "order": 4,
+      "order": 3,
       "type": "system"
     },
     {
@@ -262,7 +328,7 @@
       "name": "Agenda",
       "slug": "calendar",
       "active": true,
-      "order": 5,
+      "order": 4,
       "type": "system"
     },
     {
@@ -270,7 +336,7 @@
       "name": "Info",
       "slug": "info",
       "active": true,
-      "order": 6,
+      "order": 5,
       "type": "system"
     },
     {
@@ -278,7 +344,7 @@
       "name": "Ouderwerkgroep",
       "slug": "ouderwerkgroep",
       "active": true,
-      "order": 7,
+      "order": 6,
       "type": "system"
     },
     {
@@ -286,7 +352,7 @@
       "name": "Foto's",
       "slug": "gallery",
       "active": true,
-      "order": 8,
+      "order": 7,
       "type": "system"
     },
     {
@@ -294,7 +360,7 @@
       "name": "Contact",
       "slug": "contact",
       "active": true,
-      "order": 9,
+      "order": 8,
       "type": "system"
     }
   ]
