@@ -60,9 +60,11 @@ Je bent de virtuele assistent van VBS Sint-Maarten in Sijsele.
 SCHOOLINFORMATIE:
 - School begint om 08:30 en eindigt om 15:30
 - Middagpauze: 12:05 - 13:20
-- Adres: Kloosterstraat 1, 8340 Sijsele
+${config.contactAddress ? `- Adres: ${config.contactAddress}` : ''}
 - Email: ${config.contactEmail}
-- Telefoon: 050 35 54 63
+${config.contactPhoneKloosterstraat ? `- Telefoon Kloosterstraat: ${config.contactPhoneKloosterstraat}` : ''}
+${config.contactPhoneHovingenlaan ? `- Telefoon Hovingenlaan: ${config.contactPhoneHovingenlaan}` : ''}
+${config.contactPhoneGSM ? `- GSM: ${config.contactPhoneGSM}` : ''}
 - Menu/Maaltijden: ${config.menuUrl}
 
 KOMENDE EVENEMENTEN:
@@ -345,11 +347,11 @@ const Footer = ({ setPage }: any) => (
       <div>
         <h3 className="font-display text-lg font-bold mb-4">Contact</h3>
         <ul className="space-y-2 text-sm text-gray-300">
-          <li className="flex items-center gap-2"><MapPin size={14} /> Kloosterstraat 4a, 8340 Sijsele</li>
-          <li className="flex items-center gap-2"><Mail size={14} /> info@vrijebasisschoolsijsele.be</li>
-          <li className="flex items-center gap-2"><Phone size={14} /> Kloosterstraat: 050 36 32 25</li>
-          <li className="flex items-center gap-2"><Phone size={14} /> Hovingenlaan: 050 36 09 71</li>
-          <li className="flex items-center gap-2"><Phone size={14} /> GSM: 0496 23 57 01</li>
+          {config.contactAddress && <li className="flex items-center gap-2"><MapPin size={14} /> {config.contactAddress}</li>}
+          <li className="flex items-center gap-2"><Mail size={14} /> {config.contactEmail}</li>
+          {config.contactPhoneKloosterstraat && <li className="flex items-center gap-2"><Phone size={14} /> Kloosterstraat: {config.contactPhoneKloosterstraat}</li>}
+          {config.contactPhoneHovingenlaan && <li className="flex items-center gap-2"><Phone size={14} /> Hovingenlaan: {config.contactPhoneHovingenlaan}</li>}
+          {config.contactPhoneGSM && <li className="flex items-center gap-2"><Phone size={14} /> GSM: {config.contactPhoneGSM}</li>}
         </ul>
       </div>
       <div>
@@ -987,11 +989,11 @@ const InfoPage = ({ config, downloads }: { config: SiteConfig; downloads: Array<
         <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
             <h2 className="text-2xl font-bold mb-6 flex items-center gap-3 text-school-green"><Phone/> Contact</h2>
             <ul className="space-y-3 text-gray-600">
-                <li className="flex items-center gap-2"><MapPin size={16} className="text-school-red"/> Kloosterstraat 4a, 8340 Sijsele</li>
-                <li className="flex items-center gap-2"><Mail size={16} className="text-school-red"/> info@vrijebasisschoolsijsele.be</li>
-                <li className="flex items-center gap-2"><Phone size={16} className="text-school-green"/> Kloosterstraat: 050 36 32 25</li>
-                <li className="flex items-center gap-2"><Phone size={16} className="text-school-green"/> Hovingenlaan: 050 36 09 71</li>
-                <li className="flex items-center gap-2"><Phone size={16} className="text-school-orange"/> GSM: 0496 23 57 01</li>
+                {config.contactAddress && <li className="flex items-center gap-2"><MapPin size={16} className="text-school-red"/> {config.contactAddress}</li>}
+                <li className="flex items-center gap-2"><Mail size={16} className="text-school-red"/> {config.contactEmail}</li>
+                {config.contactPhoneKloosterstraat && <li className="flex items-center gap-2"><Phone size={16} className="text-school-green"/> Kloosterstraat: {config.contactPhoneKloosterstraat}</li>}
+                {config.contactPhoneHovingenlaan && <li className="flex items-center gap-2"><Phone size={16} className="text-school-green"/> Hovingenlaan: {config.contactPhoneHovingenlaan}</li>}
+                {config.contactPhoneGSM && <li className="flex items-center gap-2"><Phone size={16} className="text-school-orange"/> GSM: {config.contactPhoneGSM}</li>}
             </ul>
         </div>
     </div>
@@ -1258,16 +1260,17 @@ function App() {
                 <div className="bg-white p-8 rounded-2xl shadow-lg border border-gray-100">
                   <h2 className="text-2xl font-bold mb-6 text-gray-900">Bereikbaarheid</h2>
                   <div className="space-y-5">
-                    <div className="flex items-start gap-4">
-                      <div className="bg-school-green/10 p-3 rounded-full flex-shrink-0">
-                        <MapPin className="text-school-green" size={24} />
+                    {config.contactAddress && (
+                      <div className="flex items-start gap-4">
+                        <div className="bg-school-green/10 p-3 rounded-full flex-shrink-0">
+                          <MapPin className="text-school-green" size={24} />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-gray-900 mb-1">Adres</h3>
+                          <p className="text-gray-600">{config.contactAddress}</p>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-bold text-gray-900 mb-1">Adres</h3>
-                        <p className="text-gray-600">Kloosterstraat 1</p>
-                        <p className="text-gray-600">8340 Sijsele (Damme)</p>
-                      </div>
-                    </div>
+                    )}
 
                     <div className="flex items-start gap-4">
                       <div className="bg-school-orange/10 p-3 rounded-full flex-shrink-0">
@@ -1281,17 +1284,47 @@ function App() {
                       </div>
                     </div>
 
-                    <div className="flex items-start gap-4">
-                      <div className="bg-school-red/10 p-3 rounded-full flex-shrink-0">
-                        <Phone className="text-school-red" size={24} />
+                    {config.contactPhoneKloosterstraat && (
+                      <div className="flex items-start gap-4">
+                        <div className="bg-school-red/10 p-3 rounded-full flex-shrink-0">
+                          <Phone className="text-school-red" size={24} />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-gray-900 mb-1">Telefoon Kloosterstraat</h3>
+                          <a href={`tel:${config.contactPhoneKloosterstraat.replace(/\s/g, '')}`} className="text-school-red hover:underline">
+                            {config.contactPhoneKloosterstraat}
+                          </a>
+                        </div>
                       </div>
-                      <div>
-                        <h3 className="font-bold text-gray-900 mb-1">Telefoon</h3>
-                        <a href="tel:+3250355463" className="text-school-red hover:underline">
-                          050 35 54 63
-                        </a>
+                    )}
+
+                    {config.contactPhoneHovingenlaan && (
+                      <div className="flex items-start gap-4">
+                        <div className="bg-school-red/10 p-3 rounded-full flex-shrink-0">
+                          <Phone className="text-school-red" size={24} />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-gray-900 mb-1">Telefoon Hovingenlaan</h3>
+                          <a href={`tel:${config.contactPhoneHovingenlaan.replace(/\s/g, '')}`} className="text-school-red hover:underline">
+                            {config.contactPhoneHovingenlaan}
+                          </a>
+                        </div>
                       </div>
-                    </div>
+                    )}
+
+                    {config.contactPhoneGSM && (
+                      <div className="flex items-start gap-4">
+                        <div className="bg-school-red/10 p-3 rounded-full flex-shrink-0">
+                          <Phone className="text-school-red" size={24} />
+                        </div>
+                        <div>
+                          <h3 className="font-bold text-gray-900 mb-1">GSM</h3>
+                          <a href={`tel:${config.contactPhoneGSM.replace(/\s/g, '')}`} className="text-school-red hover:underline">
+                            {config.contactPhoneGSM}
+                          </a>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

@@ -6,7 +6,11 @@
     "homeTitle": "Samen groeien,\nelk op zijn eigen ritme",
     "homeSubtitle": "Vrije Basisschool Sijsele",
     "aboutText": "In VBS Sint-Maarten staat het kind centraal. Wij geloven in onderwijs dat niet alleen kennis overdraagt, maar ook werkt aan de totale persoonlijkheidsontwikkeling.",
-    "contactEmail": "info@vrijebasisschoolsijsele.be"
+    "contactEmail": "info@vrijebasisschoolsijsele.be",
+    "contactAddress": "Kloosterstraat 4a, 8340 Sijsele",
+    "contactPhoneKloosterstraat": "050 36 32 25",
+    "contactPhoneHovingenlaan": "050 36 09 71",
+    "contactPhoneGSM": "0496 23 57 01"
   },
   "heroImages": [
     "/images/hero/school-main.jpeg",

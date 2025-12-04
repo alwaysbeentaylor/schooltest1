@@ -81,6 +81,10 @@ interface SiteConfig {
   homeSubtitle: string;
   aboutText: string;
   contactEmail: string;
+  contactAddress: string;
+  contactPhoneKloosterstraat: string;
+  contactPhoneHovingenlaan: string;
+  contactPhoneGSM: string;
 }
 
 interface PageConfig {
@@ -1570,12 +1574,52 @@ export const AdminPanel = () => {
                 </h3>
                 <div className="space-y-4">
                   <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Adres</label>
+                    <input
+                      type="text"
+                      value={config.contactAddress || ''}
+                      onChange={(e) => setConfig({ ...config, contactAddress: e.target.value })}
+                      className="w-full p-3 border-2 border-red-200 rounded-xl focus:border-red-500 focus:outline-none"
+                      placeholder="Kloosterstraat 4a, 8340 Sijsele"
+                    />
+                  </div>
+                  <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">Email</label>
                     <input
                       type="email"
                       value={config.contactEmail}
                       onChange={(e) => setConfig({ ...config, contactEmail: e.target.value })}
                       className="w-full p-3 border-2 border-red-200 rounded-xl focus:border-red-500 focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Telefoon Kloosterstraat</label>
+                    <input
+                      type="text"
+                      value={config.contactPhoneKloosterstraat || ''}
+                      onChange={(e) => setConfig({ ...config, contactPhoneKloosterstraat: e.target.value })}
+                      className="w-full p-3 border-2 border-red-200 rounded-xl focus:border-red-500 focus:outline-none"
+                      placeholder="050 36 32 25"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">Telefoon Hovingenlaan</label>
+                    <input
+                      type="text"
+                      value={config.contactPhoneHovingenlaan || ''}
+                      onChange={(e) => setConfig({ ...config, contactPhoneHovingenlaan: e.target.value })}
+                      className="w-full p-3 border-2 border-red-200 rounded-xl focus:border-red-500 focus:outline-none"
+                      placeholder="050 36 09 71"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-bold text-gray-700 mb-2">GSM</label>
+                    <input
+                      type="text"
+                      value={config.contactPhoneGSM || ''}
+                      onChange={(e) => setConfig({ ...config, contactPhoneGSM: e.target.value })}
+                      className="w-full p-3 border-2 border-red-200 rounded-xl focus:border-red-500 focus:outline-none"
+                      placeholder="0496 23 57 01"
                     />
                   </div>
                   <div>

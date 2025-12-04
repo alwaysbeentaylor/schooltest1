@@ -66,6 +66,10 @@ export interface SiteConfig {
   homeSubtitle: string;
   aboutText: string;
   contactEmail: string;
+  contactAddress: string; // e.g. "Kloosterstraat 4a, 8340 Sijsele"
+  contactPhoneKloosterstraat: string; // e.g. "050 36 32 25"
+  contactPhoneHovingenlaan: string; // e.g. "050 36 09 71"
+  contactPhoneGSM: string; // e.g. "0496 23 57 01"
 }
 
 export interface ChatMessage {
