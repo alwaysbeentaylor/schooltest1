@@ -9,7 +9,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
 // Middleware
 app.use(cors());
@@ -72,17 +72,17 @@ const initializeDataFile = () => {
       ouderwerkgroep: [],
       submissions: [],
       downloads: [],
+      enrollments: [],
       pages: [
         { id: 'home', name: 'Home', slug: 'home', active: true, order: 0, type: 'system' },
         { id: 'about', name: 'Onze School', slug: 'about', active: true, order: 1, type: 'system' },
         { id: 'enroll', name: 'Inschrijven', slug: 'enroll', active: true, order: 2, type: 'system' },
-        { id: 'team', name: 'Team', slug: 'team', active: true, order: 3, type: 'system' },
-        { id: 'news', name: 'Nieuws', slug: 'news', active: true, order: 4, type: 'system' },
-        { id: 'calendar', name: 'Agenda', slug: 'calendar', active: true, order: 5, type: 'system' },
-        { id: 'info', name: 'Info', slug: 'info', active: true, order: 6, type: 'system' },
-        { id: 'ouderwerkgroep', name: 'Ouderwerkgroep', slug: 'ouderwerkgroep', active: true, order: 7, type: 'system' },
-        { id: 'gallery', name: "Foto's", slug: 'gallery', active: true, order: 8, type: 'system' },
-        { id: 'contact', name: 'Contact', slug: 'contact', active: true, order: 9, type: 'system' },
+        { id: 'news', name: 'Nieuws', slug: 'news', active: true, order: 3, type: 'system' },
+        { id: 'calendar', name: 'Agenda', slug: 'calendar', active: true, order: 4, type: 'system' },
+        { id: 'info', name: 'Info', slug: 'info', active: true, order: 5, type: 'system' },
+        { id: 'ouderwerkgroep', name: 'Ouderwerkgroep', slug: 'ouderwerkgroep', active: true, order: 6, type: 'system' },
+        { id: 'gallery', name: "Foto's", slug: 'gallery', active: true, order: 7, type: 'system' },
+        { id: 'contact', name: 'Contact', slug: 'contact', active: true, order: 8, type: 'system' },
       ]
     };
     fs.writeFileSync(DATA_FILE, JSON.stringify(initialData, null, 2));
@@ -90,6 +90,22 @@ const initializeDataFile = () => {
 };
 
 initializeDataFile();
+
+// Ensure enrollments array exists in existing data files
+const ensureEnrollmentsArray = () => {
+  try {
+    const data = readData();
+    if (!data.enrollments) {
+      data.enrollments = [];
+      writeData(data);
+      console.log('✅ Enrollments array toegevoegd aan data bestand');
+    }
+  } catch (error) {
+    console.error('Fout bij toevoegen enrollments array:', error);
+  }
+};
+
+ensureEnrollmentsArray();
 
 // Helper functions
 const readData = () => {
@@ -803,6 +819,88 @@ app.delete('/api/downloads/:id', (req, res) => {
     }
   } catch (error) {
     res.status(500).json({ error: 'Fout bij verwijderen document' });
+  }
+});
+
+// ============ ENROLLMENTS ROUTES ============
+app.get('/api/enrollments', (req, res) => {
+  try {
+    const data = readData();
+    res.json(data.enrollments || []);
+  } catch (error) {
+    res.status(500).json({ error: 'Fout bij ophalen inschrijvingen' });
+  }
+});
+
+app.post('/api/enrollments', (req, res) => {
+  try {
+    const data = readData();
+    if (!data.enrollments) data.enrollments = [];
+    
+    const newEnrollment = {
+      id: Date.now().toString(),
+      submittedAt: new Date().toISOString(),
+      status: 'nieuw',
+      ...req.body
+    };
+    
+    data.enrollments.unshift(newEnrollment);
+    writeData(data);
+    res.json({ success: true, item: newEnrollment });
+  } catch (error) {
+    res.status(500).json({ error: 'Fout bij opslaan inschrijving' });
+  }
+});
+
+app.get('/api/enrollments/:id', (req, res) => {
+  try {
+    const data = readData();
+    if (!data.enrollments) data.enrollments = [];
+    
+    const enrollment = data.enrollments.find(e => e.id === req.params.id);
+    if (enrollment) {
+      res.json(enrollment);
+    } else {
+      res.status(404).json({ error: 'Inschrijving niet gevonden' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Fout bij ophalen inschrijving' });
+  }
+});
+
+app.put('/api/enrollments/:id', (req, res) => {
+  try {
+    const data = readData();
+    if (!data.enrollments) data.enrollments = [];
+    
+    const index = data.enrollments.findIndex(e => e.id === req.params.id);
+    if (index !== -1) {
+      data.enrollments[index] = { ...data.enrollments[index], ...req.body };
+      writeData(data);
+      res.json({ success: true, item: data.enrollments[index] });
+    } else {
+      res.status(404).json({ error: 'Inschrijving niet gevonden' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Fout bij bijwerken inschrijving' });
+  }
+});
+
+app.delete('/api/enrollments/:id', (req, res) => {
+  try {
+    const data = readData();
+    if (!data.enrollments) data.enrollments = [];
+    
+    const index = data.enrollments.findIndex(e => e.id === req.params.id);
+    if (index !== -1) {
+      data.enrollments.splice(index, 1);
+      writeData(data);
+      res.json({ success: true });
+    } else {
+      res.status(404).json({ error: 'Inschrijving niet gevonden' });
+    }
+  } catch (error) {
+    res.status(500).json({ error: 'Fout bij verwijderen inschrijving' });
   }
 });
 
