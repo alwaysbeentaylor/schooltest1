@@ -1,0 +1,221 @@
+{
+  "config": {
+    "menuUrl": "https://order.hanssens.be/menu/O56/OUDE-VESTIGING",
+    "homeHeroImage": "/images/hero/school-main.jpeg",
+    "homeHeroPosition": "center center",
+    "homeTitle": "Samen groeien,\nelk op zijn eigen ritme",
+    "homeSubtitle": "Vrije Basisschool Sijsele",
+    "aboutText": "In VBS Sint-Maarten staat het kind centraal. Wij geloven in onderwijs dat niet alleen kennis overdraagt, maar ook werkt aan de totale persoonlijkheidsontwikkeling.",
+    "contactEmail": "info@vrijebasisschoolsijsele.be"
+  },
+  "heroImages": [
+    "/images/hero/school-main.jpeg",
+    "/images/hero/school-building.jpeg",
+    "/images/hero/school-kids.jpeg"
+  ],
+  "news": [
+    {
+      "id": "1",
+      "title": "Grootoudersfeest was een succes!",
+      "content": "Wat hebben we genoten van de massale opkomst. De kleuters hebben hun beste beentje voorgezet. Bekijk zeker de foto's in het album.",
+      "date": "2023-10-15",
+      "expiryDate": "2025-01-01",
+      "imageUrl": "/images/news/bibliotheek-13.jpeg",
+      "category": "Kleuter"
+    },
+    {
+      "id": "2",
+      "title": "Inschrijvingen schooljaar 2024-2025",
+      "content": "De inschrijvingen starten binnenkort. Vergeet niet uw afspraak te maken voor een rondleiding.",
+      "date": "2023-11-01",
+      "expiryDate": "2025-09-01",
+      "imageUrl": "/images/news/bibliotheek-15.jpeg",
+      "category": "Algemeen"
+    },
+    {
+      "id": "3",
+      "title": "Herfstwandeling L3 en L4",
+      "content": "Met laarzen aan trokken we het bos in. We leerden over paddenstoelen en bladeren.",
+      "date": "2023-10-20",
+      "expiryDate": "2025-11-20",
+      "imageUrl": "/images/news/bibliotheek-17.jpeg",
+      "category": "Lager"
+    }
+  ],
+  "events": [
+    {
+      "id": "1",
+      "title": "Pedagogische studiedag",
+      "date": "2025-01-15",
+      "type": "Vrije Dag",
+      "grades": ["All"],
+      "description": "Vrije dag voor de leerlingen."
+    },
+    {
+      "id": "2",
+      "title": "Sinterklaas op school",
+      "date": "2025-12-06",
+      "type": "Activiteit",
+      "grades": ["All"],
+      "description": "De Sint komt langs in alle klassen."
+    },
+    {
+      "id": "3",
+      "title": "Kerstvakantie",
+      "date": "2025-12-25",
+      "type": "Vakantie",
+      "grades": ["All"],
+      "description": "Prettige feesten!"
+    }
+  ],
+  "albums": [
+    {
+      "id": "1",
+      "location": "Kleuter Klooster",
+      "title": "Spelen in de herfstzon",
+      "coverImage": "/images/gallery/bibliotheek-1.jpeg",
+      "images": [
+        "/images/gallery/bibliotheek-1.jpeg",
+        "/images/gallery/bibliotheek-3.jpeg",
+        "/images/gallery/bibliotheek-5.jpeg"
+      ],
+      "createdDate": "2023-10-01"
+    },
+    {
+      "id": "2",
+      "location": "Kleuter Klooster",
+      "title": "Creatieve Workshops",
+      "coverImage": "/images/gallery/bibliotheek-3.jpeg",
+      "images": [
+        "/images/gallery/bibliotheek-3.jpeg",
+        "/images/gallery/bibliotheek-5.jpeg"
+      ],
+      "createdDate": "2023-11-15"
+    },
+    {
+      "id": "3",
+      "location": "Lager",
+      "title": "Activiteiten 2023",
+      "coverImage": "/images/gallery/bibliotheek-7.jpeg",
+      "images": [
+        "/images/gallery/bibliotheek-7.jpeg",
+        "/images/gallery/bibliotheek-9.jpeg",
+        "/images/gallery/bibliotheek-11.jpeg"
+      ],
+      "createdDate": "2023-09-20"
+    },
+    {
+      "id": "4",
+      "location": "Lager",
+      "title": "Sportdag",
+      "coverImage": "/images/gallery/bibliotheek-9.jpeg",
+      "images": [
+        "/images/gallery/bibliotheek-9.jpeg",
+        "/images/gallery/bibliotheek-11.jpeg"
+      ],
+      "createdDate": "2023-10-10"
+    },
+    {
+      "id": "5",
+      "location": "Verrekijker",
+      "title": "Ontdekkingstocht",
+      "coverImage": "/images/gallery/bibliotheek-1.jpeg",
+      "images": [
+        "/images/gallery/bibliotheek-1.jpeg",
+        "/images/gallery/bibliotheek-7.jpeg"
+      ],
+      "createdDate": "2023-11-01"
+    },
+    {
+      "id": "6",
+      "location": "Algemeen",
+      "title": "Schoolfeest 2023",
+      "coverImage": "/images/gallery/bibliotheek-11.jpeg",
+      "images": [
+        "/images/gallery/bibliotheek-11.jpeg",
+        "/images/gallery/bibliotheek-1.jpeg",
+        "/images/gallery/bibliotheek-7.jpeg"
+      ],
+      "createdDate": "2023-06-15"
+    }
+  ],
+  "team": [
+    {
+      "id": "1",
+      "role": "Directie",
+      "imageUrl": "https://picsum.photos/400/400?random=20",
+      "group": "Directie"
+    },
+    {
+      "id": "2",
+      "role": "Juf 1e Kleuter",
+      "imageUrl": "https://picsum.photos/400/400?random=21",
+      "group": "Kleuter"
+    },
+    {
+      "id": "3",
+      "role": "Meester 5e Leerjaar",
+      "imageUrl": "https://picsum.photos/400/400?random=22",
+      "group": "Lager"
+    },
+    {
+      "id": "4",
+      "role": "Zorgcoördinator",
+      "imageUrl": "https://picsum.photos/400/400?random=23",
+      "group": "Zorg"
+    }
+  ],
+  "ouderwerkgroep": [
+    {
+      "id": "1",
+      "title": "Pannenkoekendag",
+      "description": "Heerlijke pannenkoeken bakken voor alle kinderen. Een jaarlijkse traditie waar iedereen van geniet!",
+      "image": "/images/gallery/bibliotheek-1.jpeg"
+    },
+    {
+      "id": "2",
+      "title": "Koekjesverkoop",
+      "description": "Zelfgebakken koekjes verkopen om geld in te zamelen voor nieuwe speeltoestellen.",
+      "image": "/images/gallery/bibliotheek-3.jpeg"
+    },
+    {
+      "id": "3",
+      "title": "Kerstmarkt",
+      "description": "Gezellige kerstmarkt met kraampjes, warme chocomelk en leuke activiteiten voor het hele gezin.",
+      "image": "/images/gallery/bibliotheek-5.jpeg"
+    }
+  ],
+  "submissions": [
+    {
+      "id": "1",
+      "date": "2023-10-25",
+      "type": "Contact",
+      "name": "Jan Peeters",
+      "email": "jan@test.be",
+      "details": "Wanneer is de volgende info-avond?",
+      "status": "Nieuw"
+    },
+    {
+      "id": "2",
+      "date": "2023-10-24",
+      "type": "Inschrijving",
+      "name": "Sarah de Boer",
+      "email": "sarah@test.be",
+      "details": "Graag rondleiding voor instap peuterklas",
+      "status": "Gelezen"
+    }
+  ],
+  "pages": [
+    { "id": "home", "name": "Home", "slug": "home", "active": true, "order": 0, "type": "system" },
+    { "id": "about", "name": "Over Ons", "slug": "about", "active": true, "order": 1, "type": "system" },
+    { "id": "enroll", "name": "Inschrijven", "slug": "enroll", "active": true, "order": 2, "type": "system" },
+    { "id": "team", "name": "Team", "slug": "team", "active": true, "order": 3, "type": "system" },
+    { "id": "news", "name": "Nieuws", "slug": "news", "active": true, "order": 4, "type": "system" },
+    { "id": "calendar", "name": "Agenda", "slug": "calendar", "active": true, "order": 5, "type": "system" },
+    { "id": "info", "name": "Info", "slug": "info", "active": true, "order": 6, "type": "system" },
+    { "id": "ouderwerkgroep", "name": "Ouderwerkgroep", "slug": "ouderwerkgroep", "active": true, "order": 7, "type": "system" },
+    { "id": "gallery", "name": "Foto's", "slug": "gallery", "active": true, "order": 8, "type": "system" },
+    { "id": "contact", "name": "Contact", "slug": "contact", "active": true, "order": 9, "type": "system" }
+  ]
+}
+

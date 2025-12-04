@@ -10,6 +10,7 @@ import { generateNewsContent, generateChatResponse } from './services/geminiServ
 import { MOCK_NEWS, MOCK_EVENTS, MOCK_ALBUMS, MOCK_TEAM, DEFAULT_CONFIG, MOCK_SUBMISSIONS, INITIAL_CHAT_MESSAGES, HERO_IMAGES } from './constants';
 import { NewsItem, CalendarEvent, PhotoAlbum, PageView, Teacher, SiteConfig, FormSubmission, ChatMessage } from './types';
 import { HeroCarousel, ParentsPage, GalleryPage } from './NewComponents';
+import { AdminPanel } from './AdminPanel';
 
 // --- UTILS ---
 const addToGoogleCalendar = (event: CalendarEvent) => {
@@ -21,75 +22,164 @@ const addToGoogleCalendar = (event: CalendarEvent) => {
 
 // --- COMPONENTS ---
 
-// 1. CHAT WIDGET
-const ChatWidget = () => {
+// Suggested questions for the chatbot
+const SUGGESTED_QUESTIONS = [
+    "Hoe laat begint de school?",
+    "Wanneer is de volgende vakantie?",
+    "Wat staat er vandaag op het menu?",
+    "Hoe kan ik mijn kind inschrijven?",
+    "Wat moet mijn kind aandoen?",
+];
+
+// 1. CHAT WIDGET - Smart AI Assistant
+const ChatWidget = ({ events, config }: { events: CalendarEvent[], config: SiteConfig }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_CHAT_MESSAGES);
     const [input, setInput] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showSuggestions, setShowSuggestions] = useState(true);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     useEffect(scrollToBottom, [messages, isOpen]);
 
-    const handleSend = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!input.trim()) return;
+    // Build context for AI with school info
+    const buildSchoolContext = () => {
+        const upcomingEvents = events
+            .filter(e => new Date(e.date) >= new Date())
+            .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+            .slice(0, 5);
+        
+        const eventsList = upcomingEvents.map(e => 
+            `- ${e.title} op ${new Date(e.date).toLocaleDateString('nl-BE')} (${e.type})`
+        ).join('\n');
 
-        const userMsg: ChatMessage = { id: Date.now().toString(), sender: 'user', text: input, timestamp: new Date() };
+        return `
+Je bent de virtuele assistent van VBS Sint-Maarten in Sijsele.
+
+SCHOOLINFORMATIE:
+- School begint om 08:30 en eindigt om 15:30
+- Middagpauze: 12:05 - 13:20
+- Adres: Kloosterstraat 1, 8340 Sijsele
+- Email: ${config.contactEmail}
+- Telefoon: 050 35 54 63
+- Menu/Maaltijden: ${config.menuUrl}
+
+KOMENDE EVENEMENTEN:
+${eventsList || 'Geen evenementen gepland'}
+
+INSCHRIJVINGEN:
+- Peuters kunnen instappen op vaste momenten door het jaar
+- Rondleidingen kunnen aangevraagd worden via de website
+- Neem contact op voor een persoonlijk gesprek
+
+PRAKTISCHE INFO:
+- Voor- en naschoolse opvang beschikbaar
+- Warme maaltijden via Hanssens
+- Sportkleding voor turnlessen
+
+Beantwoord vragen vriendelijk en behulpzaam in het Nederlands. Als je iets niet weet, verwijs naar de school voor meer info.
+        `;
+    };
+
+    const handleSend = async (e: React.FormEvent, questionText?: string) => {
+        e.preventDefault();
+        const text = questionText || input;
+        if (!text.trim()) return;
+
+        const userMsg: ChatMessage = { id: Date.now().toString(), sender: 'user', text: text, timestamp: new Date() };
         setMessages(prev => [...prev, userMsg]);
         setInput('');
         setLoading(true);
+        setShowSuggestions(false);
 
-        const response = await generateChatResponse(messages, input);
+        const schoolContext = buildSchoolContext();
+        const response = await generateChatResponse(messages, text, schoolContext);
         const botMsg: ChatMessage = { id: (Date.now()+1).toString(), sender: 'bot', text: response, timestamp: new Date() };
         
         setMessages(prev => [...prev, botMsg]);
         setLoading(false);
     };
 
+    const handleSuggestedQuestion = (question: string) => {
+        handleSend({ preventDefault: () => {} } as React.FormEvent, question);
+    };
+
     return (
         <>
             <button 
                 onClick={() => setIsOpen(!isOpen)}
-                className="fixed bottom-6 right-6 z-50 bg-school-red text-white p-4 rounded-full shadow-2xl hover:scale-110 transition duration-300 flex items-center gap-2"
+                className="fixed bottom-4 right-4 md:bottom-6 md:right-6 z-50 bg-gradient-to-r from-school-green to-emerald-600 text-white p-3 md:p-4 rounded-full shadow-2xl hover:scale-110 transition duration-300 flex items-center gap-2"
             >
                 {isOpen ? <X size={24} /> : <MessageCircle size={24} />}
                 {!isOpen && <span className="font-bold pr-2 hidden md:inline">Vraag het Sint-Maarten</span>}
             </button>
 
             {isOpen && (
-                <div className="fixed bottom-24 right-6 z-50 w-80 md:w-96 bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden h-[500px] animate-fade-in-up">
-                    <div className="bg-school-dark text-white p-4 flex items-center gap-3">
+                <div className="fixed bottom-20 md:bottom-24 right-2 md:right-6 z-50 w-[calc(100vw-16px)] md:w-96 bg-white rounded-2xl shadow-2xl border border-gray-200 flex flex-col overflow-hidden h-[70vh] md:h-[500px] animate-fade-in-up">
+                    <div className="bg-gradient-to-r from-school-green to-emerald-600 text-white p-4 flex items-center gap-3">
                         <div className="bg-white/20 p-2 rounded-full"><School size={20} /></div>
                         <div>
                             <h3 className="font-bold text-sm">Sint-Maarten Assistent</h3>
-                            <p className="text-xs text-gray-300">Altijd bereikbaar</p>
+                            <p className="text-xs text-white/80">Ik help je graag!</p>
                         </div>
                     </div>
-                    <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50">
+                    
+                    <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-50 chat-scroll">
                         {messages.map(msg => (
                             <div key={msg.id} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                                 <div className={`max-w-[85%] p-3 rounded-xl text-sm ${
                                     msg.sender === 'user' 
-                                    ? 'bg-school-red text-white rounded-tr-none' 
+                                    ? 'bg-gradient-to-r from-school-green to-emerald-600 text-white rounded-tr-none' 
                                     : 'bg-white text-gray-800 border border-gray-200 rounded-tl-none shadow-sm'
                                 }`}>
                                     {msg.text}
                                 </div>
                             </div>
                         ))}
-                        {loading && <div className="text-xs text-gray-400 text-center">Aan het typen...</div>}
+                        
+                        {/* Suggested Questions */}
+                        {showSuggestions && messages.length <= 1 && (
+                            <div className="space-y-2">
+                                <p className="text-xs text-gray-500 font-medium">💡 Populaire vragen:</p>
+                                <div className="flex flex-wrap gap-2">
+                                    {SUGGESTED_QUESTIONS.map((q, i) => (
+                                        <button
+                                            key={i}
+                                            onClick={() => handleSuggestedQuestion(q)}
+                                            className="suggested-question text-xs"
+                                        >
+                                            {q}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        
+                        {loading && (
+                            <div className="flex justify-start">
+                                <div className="bg-white p-3 rounded-xl border border-gray-200 rounded-tl-none shadow-sm">
+                                    <div className="flex gap-1">
+                                        <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                                        <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                                        <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                         <div ref={messagesEndRef} />
                     </div>
+                    
                     <form onSubmit={handleSend} className="p-3 border-t border-gray-100 bg-white flex gap-2">
                         <input 
                             value={input}
                             onChange={e => setInput(e.target.value)}
                             placeholder="Stel uw vraag..."
-                            className="flex-1 p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-school-red"
+                            className="flex-1 p-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-school-green"
                         />
-                        <button type="submit" className="bg-school-green text-white p-2 rounded-lg hover:bg-green-700 transition"><Send size={18} /></button>
+                        <button type="submit" className="bg-gradient-to-r from-school-green to-emerald-600 text-white p-2 rounded-lg hover:opacity-90 transition">
+                            <Send size={18} />
+                        </button>
                     </form>
                 </div>
             )}
@@ -97,20 +187,37 @@ const ChatWidget = () => {
     );
 };
 
-// 2. NAVIGATION
-const Navbar = ({ activePage, setPage, mobileMenuOpen, setMobileMenuOpen, config }: any) => {
-  const navItems: { id: PageView; label: string }[] = [
-    { id: 'home', label: 'Home' },
-    { id: 'about', label: 'Over Ons' },
-    { id: 'enroll', label: 'Inschrijven' },
-    { id: 'team', label: 'Team' },
-    { id: 'news', label: 'Nieuws' },
-    { id: 'calendar', label: 'Agenda' },
-    { id: 'info', label: 'Info' },
-    { id: 'ouderwerkgroep', label: 'Ouderwerkgroep' },
-    { id: 'gallery', label: 'Foto\'s' },
-    { id: 'contact', label: 'Contact' },
-  ];
+// Page configuration interface
+interface PageConfig {
+  id: string;
+  name: string;
+  slug: string;
+  active: boolean;
+  order: number;
+  type: 'system' | 'custom';
+}
+
+// Default pages
+const DEFAULT_PAGES: PageConfig[] = [
+  { id: 'home', name: 'Home', slug: 'home', active: true, order: 0, type: 'system' },
+  { id: 'about', name: 'Over Ons', slug: 'about', active: true, order: 1, type: 'system' },
+  { id: 'enroll', name: 'Inschrijven', slug: 'enroll', active: true, order: 2, type: 'system' },
+  { id: 'team', name: 'Team', slug: 'team', active: true, order: 3, type: 'system' },
+  { id: 'news', name: 'Nieuws', slug: 'news', active: true, order: 4, type: 'system' },
+  { id: 'calendar', name: 'Agenda', slug: 'calendar', active: true, order: 5, type: 'system' },
+  { id: 'info', name: 'Info', slug: 'info', active: true, order: 6, type: 'system' },
+  { id: 'ouderwerkgroep', name: 'Ouderwerkgroep', slug: 'ouderwerkgroep', active: true, order: 7, type: 'system' },
+  { id: 'gallery', name: "Foto's", slug: 'gallery', active: true, order: 8, type: 'system' },
+  { id: 'contact', name: 'Contact', slug: 'contact', active: true, order: 9, type: 'system' },
+];
+
+// 2. NAVIGATION - Dynamic based on page config
+const Navbar = ({ activePage, setPage, mobileMenuOpen, setMobileMenuOpen, config, pages }: any) => {
+  // Filter and sort active pages
+  const navItems = (pages || DEFAULT_PAGES)
+    .filter((p: PageConfig) => p.active)
+    .sort((a: PageConfig, b: PageConfig) => a.order - b.order)
+    .map((p: PageConfig) => ({ id: p.slug as PageView, label: p.name }));
 
   return (
     <nav className="sticky top-0 z-40 bg-white shadow-md">
@@ -249,11 +356,11 @@ const Footer = ({ setPage }: any) => (
 
 // 3. PAGES
 
-const HomePage = ({ news, setPage, config }: { news: NewsItem[], setPage: (p: PageView) => void, config: SiteConfig }) => (
+const HomePage = ({ news, setPage, config, heroImages }: { news: NewsItem[], setPage: (p: PageView) => void, config: SiteConfig, heroImages: string[] }) => (
   <div className="animate-fade-in">
     {/* Hero Section */}
     <div className="relative h-[600px] w-full overflow-hidden group">
-      <HeroCarousel images={HERO_IMAGES} />
+      <HeroCarousel images={heroImages} />
       <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-8 md:p-20 z-10">
         <div className="max-w-5xl">
           <div className="flex gap-2 mb-6">
@@ -371,23 +478,40 @@ const AboutPage = ({ config }: { config: SiteConfig }) => (
 );
 
 const TeamPage = ({ team }: { team: Teacher[] }) => (
-  <div className="max-w-7xl mx-auto px-4 py-16 animate-fade-in">
+  <div className="max-w-6xl mx-auto px-4 py-16 animate-fade-in">
     <div className="text-center mb-16">
-      <h1 className="text-5xl font-display font-bold text-school-dark mb-6">Het Team</h1>
-      <p className="text-gray-600 max-w-2xl mx-auto text-lg">Een gedreven korps staat elke dag klaar.</p>
+      <h1 className="text-5xl font-display font-bold text-school-dark mb-6">Ons Team</h1>
+      <p className="text-gray-600 max-w-2xl mx-auto text-lg">
+        Een warm en gedreven team staat elke dag klaar voor uw kinderen. 
+        Samen zorgen we voor een fijne leeromgeving waar elk kind kan groeien.
+      </p>
     </div>
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+    
+    {/* Team foto's in een eenvoudige grid zonder opdeling */}
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
       {team.map(member => (
-        <div key={member.id} className="text-center group cursor-pointer">
-          <div className="relative mb-6 overflow-hidden rounded-2xl aspect-[3/4] shadow-md group-hover:shadow-xl transition duration-300">
-            <img src={member.imageUrl} alt={member.role} className="w-full h-full object-cover group-hover:scale-110 transition duration-700" />
-            <div className="absolute bottom-0 w-full p-4 bg-gradient-to-t from-black/70 to-transparent text-white">
-              <span className="inline-block bg-school-red px-2 py-1 text-xs font-bold rounded-md mb-1">{member.group}</span>
-            </div>
+        <div key={member.id} className="group">
+          <div className="relative overflow-hidden rounded-2xl aspect-square shadow-md group-hover:shadow-xl transition duration-300">
+            <img 
+              src={member.imageUrl} 
+              alt="Teamlid" 
+              className="w-full h-full object-cover group-hover:scale-105 transition duration-500" 
+            />
           </div>
-          <h3 className="font-bold text-xl text-gray-800">{member.role}</h3>
         </div>
       ))}
+    </div>
+
+    {/* Algemene team beschrijving */}
+    <div className="mt-16 bg-school-green/5 p-8 md:p-12 rounded-2xl border-2 border-school-green/20 text-center">
+      <h2 className="text-2xl font-display font-bold text-school-dark mb-4">
+        Samen sterk voor elk kind
+      </h2>
+      <p className="text-gray-700 max-w-3xl mx-auto">
+        Ons team bestaat uit ervaren leerkrachten, zorgcoördinatoren en ondersteunend personeel. 
+        We werken nauw samen om elk kind de beste begeleiding te geven. 
+        Heeft u vragen? Neem gerust contact met ons op!
+      </p>
     </div>
   </div>
 );
@@ -494,305 +618,74 @@ const InfoPage = ({ config }: { config: SiteConfig }) => (
   </div>
 );
 
-// --- ADMIN PANEL (CMS) ---
-const AdminPanel = ({ news, setNews, events, setEvents, config, setConfig, submissions }: any) => {
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [password, setPassword] = useState('');
-    const [activeTab, setActiveTab] = useState<'news' | 'events' | 'pages' | 'inbox' | 'photos'>('news');
-    
-    // Editor States
-    const [newsTitle, setNewsTitle] = useState('');
-    const [newsContent, setNewsContent] = useState('');
-    const [newsDate, setNewsDate] = useState(new Date().toISOString().split('T')[0]);
-    const [newsExpiry, setNewsExpiry] = useState('');
-    const [isGenerating, setIsGenerating] = useState(false);
-
-    const [eventTitle, setEventTitle] = useState('');
-    const [eventDate, setEventDate] = useState('');
-
-    // Handlers
-    const handleLogin = () => (password === 'admin') ? setIsAuthenticated(true) : alert('Fout wachtwoord (probeer "admin")');
-
-    const handleAddNews = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setNews([{
-            id: Date.now().toString(),
-            title: newsTitle,
-            content: newsContent,
-            date: newsDate,
-            expiryDate: newsExpiry || undefined,
-            imageUrl: `https://picsum.photos/800/600?random=${Date.now()}`,
-            category: 'Algemeen'
-        }, ...news]);
-        setNewsTitle(''); setNewsContent(''); setNewsExpiry('');
-        alert('Nieuwsbericht geplaatst!');
-    };
-
-    const handleAddEvent = (e: React.FormEvent) => {
-        e.preventDefault();
-        setEvents([...events, { id: Date.now().toString(), title: eventTitle, date: eventDate, type: 'Activiteit', grades: ['All'] }]);
-        setEventTitle(''); setEventDate('');
-    };
-
-    const handleAIWrite = async () => {
-        if(!newsTitle) return alert("Vul eerst een titel in.");
-        setIsGenerating(true);
-        const text = await generateNewsContent(newsTitle);
-        setNewsContent(text);
-        setIsGenerating(false);
-    };
-
-    if (!isAuthenticated) return (
-        <div className="min-h-screen flex items-center justify-center bg-gray-100">
-            <div className="bg-white p-10 rounded-2xl shadow-xl max-w-sm w-full text-center">
-                <div className="mx-auto w-16 h-16 bg-school-red rounded-full flex items-center justify-center text-white mb-4"><Lock/></div>
-                <h2 className="text-2xl font-bold mb-6">Admin Login</h2>
-                <input type="password" value={password} onChange={e=>setPassword(e.target.value)} className="w-full p-3 border rounded-lg mb-4" placeholder="Wachtwoord"/>
-                <button onClick={handleLogin} className="w-full bg-school-dark text-white font-bold py-3 rounded-lg">Inloggen</button>
-            </div>
-        </div>
-    );
-
-    return (
-        <div className="min-h-screen bg-gray-50 p-6">
-            <div className="max-w-7xl mx-auto">
-                <div className="flex justify-between items-center mb-8">
-                    <h1 className="text-3xl font-bold text-gray-800">Schoolbeheer</h1>
-                    <button onClick={() => setIsAuthenticated(false)} className="text-red-600 font-bold bg-white px-4 py-2 rounded shadow-sm">Uitloggen</button>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                    <div className="space-y-2">
-                        {[
-                            {id: 'news', icon: <FileText size={18}/>, label: 'Nieuws'},
-                            {id: 'events', icon: <Calendar size={18}/>, label: 'Kalender'},
-                            {id: 'pages', icon: <Settings size={18}/>, label: 'Pagina\'s & Menu'},
-                            {id: 'photos', icon: <ImageIcon size={18}/>, label: 'Foto Beheer'},
-                            {id: 'inbox', icon: <Inbox size={18}/>, label: 'Inbox', count: submissions.length}
-                        ].map(tab => (
-                            <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={`w-full flex items-center justify-between p-4 rounded-xl font-medium transition ${activeTab === tab.id ? 'bg-white text-school-red shadow border-l-4 border-school-red' : 'text-gray-600 hover:bg-white'}`}>
-                                <div className="flex items-center gap-3">{tab.icon} {tab.label}</div>
-                                {tab.count !== undefined && <span className="bg-school-red text-white text-xs px-2 py-1 rounded-full">{tab.count}</span>}
-                            </button>
-                        ))}
-                    </div>
-
-                    <div className="lg:col-span-3 space-y-8">
-                        {activeTab === 'news' && (
-                            <div className="bg-white p-8 rounded-2xl shadow-sm">
-                                <h2 className="text-xl font-bold mb-6 border-b pb-4">Nieuwsbericht Maken</h2>
-                                <form onSubmit={handleAddNews} className="space-y-4 mb-10">
-                                    <input value={newsTitle} onChange={e=>setNewsTitle(e.target.value)} placeholder="Titel" className="w-full p-3 border rounded-lg"/>
-                                    <div className="flex gap-4">
-                                        <div className="flex-1">
-                                            <label className="text-xs font-bold text-gray-500 uppercase">Publicatiedatum</label>
-                                            <input type="date" value={newsDate} onChange={e=>setNewsDate(e.target.value)} className="w-full p-3 border rounded-lg"/>
-                                        </div>
-                                        <div className="flex-1">
-                                            <label className="text-xs font-bold text-gray-500 uppercase text-school-red">Verwijderdatum (Auto)</label>
-                                            <input type="date" value={newsExpiry} onChange={e=>setNewsExpiry(e.target.value)} className="w-full p-3 border rounded-lg"/>
-                                        </div>
-                                    </div>
-                                    <div className="relative">
-                                        <textarea value={newsContent} onChange={e=>setNewsContent(e.target.value)} rows={4} placeholder="Inhoud..." className="w-full p-3 border rounded-lg"/>
-                                        <button type="button" onClick={handleAIWrite} disabled={isGenerating} className="absolute bottom-3 right-3 text-xs bg-purple-600 text-white px-3 py-1 rounded-full flex items-center gap-1 hover:bg-purple-700">
-                                            <Sparkles size={12}/> {isGenerating ? 'Schrijven...' : 'AI Assistant'}
-                                        </button>
-                                    </div>
-                                    <button type="submit" className="bg-school-green text-white px-6 py-3 rounded-lg font-bold hover:bg-green-700">Publiceren</button>
-                                </form>
-                                <h3 className="font-bold text-lg mb-4">Actieve Berichten</h3>
-                                {news.map((item: NewsItem) => (
-                                    <div key={item.id} className="flex justify-between items-center p-4 border-b hover:bg-gray-50">
-                                        <div>
-                                            <div className="font-bold">{item.title}</div>
-                                            <div className="text-xs text-gray-500">Verloopt: {item.expiryDate || 'Nooit'}</div>
-                                        </div>
-                                        <button onClick={() => setNews(news.filter((n:NewsItem) => n.id !== item.id))} className="text-red-500 p-2"><Trash2 size={18}/></button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        {activeTab === 'events' && (
-                            <div className="bg-white p-8 rounded-2xl shadow-sm">
-                                <h2 className="text-xl font-bold mb-6">Kalender Item Toevoegen</h2>
-                                <form onSubmit={handleAddEvent} className="flex gap-4 mb-8">
-                                    <input value={eventTitle} onChange={e=>setEventTitle(e.target.value)} placeholder="Naam activiteit" className="flex-grow p-3 border rounded-lg"/>
-                                    <input type="date" value={eventDate} onChange={e=>setEventDate(e.target.value)} className="p-3 border rounded-lg"/>
-                                    <button type="submit" className="bg-school-blue-600 bg-blue-600 text-white px-6 rounded-lg font-bold hover:bg-blue-700"><Plus/></button>
-                                </form>
-                                {events.map((ev: CalendarEvent) => (
-                                    <div key={ev.id} className="flex justify-between p-3 border-b last:border-0">
-                                        <span><span className="font-mono text-gray-500 mr-4">{ev.date}</span> {ev.title}</span>
-                                        <button onClick={() => setEvents(events.filter((e:any)=>e.id!==ev.id))} className="text-red-400 hover:text-red-600"><Trash2 size={16}/></button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        {activeTab === 'pages' && (
-                            <div className="bg-white p-8 rounded-2xl shadow-sm space-y-8">
-                                <div>
-                                    <h3 className="font-bold text-lg mb-4">Home Hero Instellingen</h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div>
-                                            <label className="block text-sm font-bold mb-2">Titel</label>
-                                            <textarea value={config.homeTitle} onChange={e => setConfig({...config, homeTitle: e.target.value})} className="w-full p-3 border rounded-lg" rows={2}/>
-                                        </div>
-                                        <div>
-                                            <label className="block text-sm font-bold mb-2">Foto Positie (Crop)</label>
-                                            <select value={config.homeHeroPosition} onChange={e => setConfig({...config, homeHeroPosition: e.target.value})} className="w-full p-3 border rounded-lg">
-                                                <option value="center center">Midden</option>
-                                                <option value="center top">Bovenkant</option>
-                                                <option value="center bottom">Onderkant</option>
-                                            </select>
-                                            <p className="text-xs text-gray-500 mt-2">Selecteer welk deel van de foto zichtbaar moet blijven.</p>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="border-t pt-6">
-                                    <h3 className="font-bold text-lg mb-4">Menu Link (Hanssens)</h3>
-                                    <div className="flex gap-2">
-                                        <input value={config.menuUrl} onChange={e => setConfig({...config, menuUrl: e.target.value})} className="w-full p-3 border rounded-lg text-sm font-mono"/>
-                                        <a href={config.menuUrl} target="_blank" className="p-3 bg-gray-100 rounded-lg"><ExternalLink size={20}/></a>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {activeTab === 'photos' && (
-                            <div className="bg-white p-8 rounded-2xl shadow-sm">
-                                <h2 className="text-xl font-bold mb-6">Foto Beheer</h2>
-
-                                <div className="bg-gradient-to-r from-school-orange to-school-red p-6 rounded-xl text-white mb-8">
-                                    <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
-                                        <ImageIcon size={20} />
-                                        Upload Nieuwe Foto's
-                                    </h3>
-                                    <p className="text-white/90 text-sm mb-4">
-                                        Selecteer foto's om te uploaden naar de galerij. Ondersteunde formaten: JPG, PNG, GIF
-                                    </p>
-                                    <div className="border-2 border-dashed border-white/50 rounded-lg p-8 text-center hover:border-white hover:bg-white/10 transition cursor-pointer">
-                                        <input
-                                            type="file"
-                                            multiple
-                                            accept="image/*"
-                                            className="hidden"
-                                            id="photo-upload"
-                                            onChange={(e) => {
-                                                if (e.target.files?.length) {
-                                                    alert(`${e.target.files.length} foto's geselecteerd. Upload functionaliteit komt binnenkort!`);
-                                                }
-                                            }}
-                                        />
-                                        <label htmlFor="photo-upload" className="cursor-pointer">
-                                            <Plus size={48} className="mx-auto mb-3 opacity-75" />
-                                            <p className="font-bold mb-1">Klik om foto's te selecteren</p>
-                                            <p className="text-sm text-white/75">Of sleep ze hierheen</p>
-                                        </label>
-                                    </div>
-                                </div>
-
-                                <div className="space-y-6">
-                                    <div>
-                                        <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
-                                            <Camera size={20} className="text-school-green" />
-                                            Huidige Albums
-                                        </h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div className="border rounded-lg p-4 hover:shadow-md transition">
-                                                <div className="flex justify-between items-start mb-2">
-                                                    <div>
-                                                        <h4 className="font-bold">Kleuter Klooster</h4>
-                                                        <p className="text-sm text-gray-500">2 albums</p>
-                                                    </div>
-                                                    <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Actief</span>
-                                                </div>
-                                            </div>
-                                            <div className="border rounded-lg p-4 hover:shadow-md transition">
-                                                <div className="flex justify-between items-start mb-2">
-                                                    <div>
-                                                        <h4 className="font-bold">Lager</h4>
-                                                        <p className="text-sm text-gray-500">2 albums</p>
-                                                    </div>
-                                                    <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Actief</span>
-                                                </div>
-                                            </div>
-                                            <div className="border rounded-lg p-4 hover:shadow-md transition">
-                                                <div className="flex justify-between items-start mb-2">
-                                                    <div>
-                                                        <h4 className="font-bold">Verrekijker</h4>
-                                                        <p className="text-sm text-gray-500">1 album</p>
-                                                    </div>
-                                                    <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Actief</span>
-                                                </div>
-                                            </div>
-                                            <div className="border rounded-lg p-4 hover:shadow-md transition">
-                                                <div className="flex justify-between items-start mb-2">
-                                                    <div>
-                                                        <h4 className="font-bold">Algemeen</h4>
-                                                        <p className="text-sm text-gray-500">1 album</p>
-                                                    </div>
-                                                    <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">Actief</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
-                                        <h4 className="font-bold text-blue-800 mb-1 text-sm">Foto Beheer Tips</h4>
-                                        <ul className="text-sm text-blue-700 space-y-1">
-                                            <li>• Upload foto's in hoge kwaliteit voor beste resultaat</li>
-                                            <li>• Organiseer foto's per locatie voor overzichtelijke galerij</li>
-                                            <li>• Verwijder oude foto's regelmatig om opslagruimte te besparen</li>
-                                        </ul>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-
-                        {activeTab === 'inbox' && (
-                            <div className="bg-white p-8 rounded-2xl shadow-sm">
-                                <h2 className="text-xl font-bold mb-6">Ingezonden Formulieren</h2>
-                                <div className="space-y-4">
-                                    {submissions.length === 0 ? <p className="text-gray-500 italic">Geen berichten.</p> : submissions.map((sub: FormSubmission) => (
-                                        <div key={sub.id} className="border p-4 rounded-lg hover:bg-gray-50">
-                                            <div className="flex justify-between mb-2">
-                                                <span className={`text-xs font-bold px-2 py-1 rounded ${sub.type === 'Inschrijving' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100'}`}>{sub.type}</span>
-                                                <span className="text-xs text-gray-500">{new Date(sub.date).toLocaleDateString()}</span>
-                                            </div>
-                                            <h4 className="font-bold">{sub.name}</h4>
-                                            <p className="text-sm text-gray-600 mt-1">{sub.details}</p>
-                                            {sub.email && <a href={`mailto:${sub.email}`} className="text-xs text-school-red mt-2 block hover:underline">{sub.email}</a>}
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
-        </div>
-    );
-};
+const API_BASE = 'http://localhost:3001/api';
 
 // 4. ROOT COMPONENT
 function App() {
   const [page, setPage] = useState<PageView>('home');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [largeText, setLargeText] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Central State (Simulated Database)
+  // Central State - fetched from API
   const [config, setConfig] = useState<SiteConfig>(DEFAULT_CONFIG);
+  const [heroImages, setHeroImages] = useState<string[]>(HERO_IMAGES);
   const [news, setNews] = useState<NewsItem[]>(MOCK_NEWS);
   const [events, setEvents] = useState<CalendarEvent[]>(MOCK_EVENTS);
   const [submissions, setSubmissions] = useState<FormSubmission[]>(MOCK_SUBMISSIONS);
+  const [team, setTeam] = useState<Teacher[]>(MOCK_TEAM);
+  const [albums, setAlbums] = useState<PhotoAlbum[]>(MOCK_ALBUMS);
+  const [pages, setPages] = useState<PageConfig[]>(DEFAULT_PAGES);
 
-  const [team] = useState<Teacher[]>(MOCK_TEAM);
-  const [albums] = useState<PhotoAlbum[]>(MOCK_ALBUMS);
+  // Fetch data from API on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await fetch(`${API_BASE}/data`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.config) setConfig(data.config);
+          if (data.heroImages) setHeroImages(data.heroImages);
+          if (data.news) setNews(data.news);
+          if (data.events) setEvents(data.events);
+          if (data.team) setTeam(data.team);
+          if (data.albums) setAlbums(data.albums);
+          if (data.submissions) setSubmissions(data.submissions);
+          if (data.pages) setPages(data.pages);
+        }
+      } catch (error) {
+        console.log('Backend niet beschikbaar, gebruik mock data');
+      }
+      // Try to load pages from localStorage as fallback
+      const savedPages = localStorage.getItem('pages');
+      if (savedPages) {
+        try {
+          setPages(JSON.parse(savedPages));
+        } catch (e) {}
+      }
+      setLoading(false);
+    };
+    fetchData();
+  }, []);
 
-  const addSubmission = (sub: FormSubmission) => setSubmissions([sub, ...submissions]);
+  const addSubmission = async (sub: FormSubmission) => {
+    try {
+      const response = await fetch(`${API_BASE}/submissions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(sub)
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setSubmissions([data.item, ...submissions]);
+        return;
+      }
+    } catch (error) {
+      console.log('Backend niet beschikbaar');
+    }
+    // Fallback to local state
+    setSubmissions([sub, ...submissions]);
+  };
 
   // Filter active news (simulating backend logic)
   const activeNews = useMemo(() => {
@@ -802,12 +695,12 @@ function App() {
   }, [news]);
 
   if (page === 'admin') {
-      return <AdminPanel news={news} setNews={setNews} events={events} setEvents={setEvents} config={config} setConfig={setConfig} submissions={submissions} />;
+      return <AdminPanel />;
   }
 
   return (
-    <div className={`min-h-screen bg-white font-sans text-gray-800 flex flex-col ${largeText ? 'text-lg' : ''}`}>
-      <Navbar activePage={page} setPage={setPage} mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} config={config} />
+    <div className={`min-h-screen bg-white font-sans text-gray-800 flex flex-col ${largeText ? 'large-text-mode' : ''}`}>
+      <Navbar activePage={page} setPage={setPage} mobileMenuOpen={mobileMenuOpen} setMobileMenuOpen={setMobileMenuOpen} config={config} pages={pages} />
 
       {/* Accessibility Button - Large Text Toggle */}
       <button
@@ -819,7 +712,7 @@ function App() {
       </button>
       
       <main className="flex-grow">
-        {page === 'home' && <HomePage news={activeNews} setPage={setPage} config={config} />}
+        {page === 'home' && <HomePage news={activeNews} setPage={setPage} config={config} heroImages={heroImages} />}
         {page === 'about' && <AboutPage config={config} />}
         {page === 'enroll' && <EnrollPage addSubmission={addSubmission} />}
         {page === 'team' && <TeamPage team={team} />}
@@ -1080,7 +973,7 @@ function App() {
       </main>
 
       <Footer setPage={setPage} />
-      <ChatWidget />
+      <ChatWidget events={events} config={config} />
     </div>
   );
 }

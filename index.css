@@ -1,3 +1,193 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Large Text Mode - applies to ALL elements */
+:root {
+  --text-scale: 1;
+}
+
+.large-text-mode {
+  --text-scale: 1.25;
+}
+
+.large-text-mode * {
+  font-size: calc(1em * var(--text-scale)) !important;
+}
+
+.large-text-mode h1 {
+  font-size: calc(2.5rem * var(--text-scale)) !important;
+}
+
+.large-text-mode h2 {
+  font-size: calc(2rem * var(--text-scale)) !important;
+}
+
+.large-text-mode h3 {
+  font-size: calc(1.5rem * var(--text-scale)) !important;
+}
+
+.large-text-mode p,
+.large-text-mode span,
+.large-text-mode a,
+.large-text-mode li,
+.large-text-mode button,
+.large-text-mode input,
+.large-text-mode textarea,
+.large-text-mode select,
+.large-text-mode label {
+  font-size: calc(1rem * var(--text-scale)) !important;
+  line-height: 1.6 !important;
+}
+
+.large-text-mode .text-sm {
+  font-size: calc(0.875rem * var(--text-scale)) !important;
+}
+
+.large-text-mode .text-xs {
+  font-size: calc(0.75rem * var(--text-scale)) !important;
+}
+
+.large-text-mode .text-lg {
+  font-size: calc(1.125rem * var(--text-scale)) !important;
+}
+
+.large-text-mode .text-xl {
+  font-size: calc(1.25rem * var(--text-scale)) !important;
+}
+
+.large-text-mode .text-2xl {
+  font-size: calc(1.5rem * var(--text-scale)) !important;
+}
+
+.large-text-mode .text-3xl {
+  font-size: calc(1.875rem * var(--text-scale)) !important;
+}
+
+.large-text-mode .text-4xl {
+  font-size: calc(2.25rem * var(--text-scale)) !important;
+}
+
+.large-text-mode .text-5xl {
+  font-size: calc(3rem * var(--text-scale)) !important;
+}
+
+/* Animations */
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounce-in {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-fade-in-up {
+  animation: fade-in-up 0.5s ease-out;
+}
+
+.animate-fade-in {
+  animation: fade-in 0.3s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+.animate-bounce-in {
+  animation: bounce-in 0.5s ease-out;
+}
+
+/* Custom scrollbar for chat */
+.chat-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-scroll::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.chat-scroll::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 10px;
+}
+
+.chat-scroll::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
+
+/* Gallery lightbox overlay */
+.lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Suggested questions styling */
+.suggested-question {
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 1px solid #86efac;
+  border-radius: 12px;
+  padding: 8px 12px;
+  font-size: 0.875rem;
+  color: #166534;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.suggested-question:hover {
+  background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Mobile improvements */
+@media (max-width: 768px) {
+  .large-text-mode * {
+    --text-scale: 1.15;
+  }
+}

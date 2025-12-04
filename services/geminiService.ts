@@ -36,13 +36,13 @@ export const generateNewsContent = async (prompt: string): Promise<string> => {
   }
 };
 
-export const generateChatResponse = async (history: ChatMessage[], userMessage: string): Promise<string> => {
+export const generateChatResponse = async (history: ChatMessage[], userMessage: string, schoolContext?: string): Promise<string> => {
     const ai = getAI();
     if (!ai) return "Excuses, ik ben even niet bereikbaar (API Config Error).";
 
     try {
         // Create a comprehensive context for the bot with school-specific information
-        const systemPrompt = `
+        const basePrompt = `
             Je bent de behulpzame virtuele medewerker van VBS Sint-Maarten in Sijsele (Damme, bij Brugge).
             Je spreekt ouders aan met 'u'. Je bent vriendelijk, warm, en geeft korte maar nuttige antwoorden.
 
@@ -100,6 +100,12 @@ export const generateChatResponse = async (history: ChatMessage[], userMessage: 
             - Foto's georganiseerd per locatie (Kleuter Klooster, Lager, Verrekijker, Algemeen)
             - Regelmatig nieuwe albums met schoolactiviteiten
 
+            WEER EN KLEDING:
+            - Bij regen: regenjas en laarzen aanbevolen
+            - Bij kou: warme jas, muts en handschoenen
+            - Bij warm weer: zonnebrandcrème en pet
+            - Sportkleding voor turnlessen (meestal 1-2 keer per week)
+
             Als je een vraag niet kunt beantwoorden, verwijs vriendelijk naar:
             - Het contactformulier op de website
             - Telefoon: 050 35 54 63
@@ -107,6 +113,11 @@ export const generateChatResponse = async (history: ChatMessage[], userMessage: 
 
             Geef concrete, praktische antwoorden. Bij vragen over inschrijving, vraag of ze een rondleiding willen plannen.
         `;
+
+        // Combine base prompt with dynamic school context
+        const systemPrompt = schoolContext 
+            ? `${basePrompt}\n\nACTUELE INFORMATIE:\n${schoolContext}`
+            : basePrompt;
 
         const response = await ai.models.generateContent({
             model: 'gemini-2.5-flash',

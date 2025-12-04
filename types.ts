@@ -23,6 +23,8 @@ export interface PhotoAlbum {
   title: string;
   coverImage: string;
   images: string[];
+  expiryDate?: string; // Optionele vervaldatum - foto's verdwijnen automatisch na deze datum
+  createdDate?: string; // Datum waarop album is aangemaakt
 }
 
 export interface Teacher {

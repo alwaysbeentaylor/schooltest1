@@ -63,7 +63,8 @@ export const MOCK_ALBUMS: PhotoAlbum[] = [
       '/images/gallery/bibliotheek-1.jpeg',
       '/images/gallery/bibliotheek-3.jpeg',
       '/images/gallery/bibliotheek-5.jpeg'
-    ]
+    ],
+    createdDate: '2023-10-01'
   },
   {
     id: '2',
@@ -73,7 +74,8 @@ export const MOCK_ALBUMS: PhotoAlbum[] = [
     images: [
       '/images/gallery/bibliotheek-3.jpeg',
       '/images/gallery/bibliotheek-5.jpeg'
-    ]
+    ],
+    createdDate: '2023-11-15'
   },
   {
     id: '3',
@@ -84,7 +86,8 @@ export const MOCK_ALBUMS: PhotoAlbum[] = [
       '/images/gallery/bibliotheek-7.jpeg',
       '/images/gallery/bibliotheek-9.jpeg',
       '/images/gallery/bibliotheek-11.jpeg'
-    ]
+    ],
+    createdDate: '2023-09-20'
   },
   {
     id: '4',
@@ -94,7 +97,9 @@ export const MOCK_ALBUMS: PhotoAlbum[] = [
     images: [
       '/images/gallery/bibliotheek-9.jpeg',
       '/images/gallery/bibliotheek-11.jpeg'
-    ]
+    ],
+    createdDate: '2023-10-10',
+    expiryDate: '2025-10-10' // Voorbeeld: vervalt na 2 jaar
   },
   {
     id: '5',
@@ -104,7 +109,8 @@ export const MOCK_ALBUMS: PhotoAlbum[] = [
     images: [
       '/images/gallery/bibliotheek-1.jpeg',
       '/images/gallery/bibliotheek-7.jpeg'
-    ]
+    ],
+    createdDate: '2023-11-01'
   },
   {
     id: '6',
@@ -115,7 +121,9 @@ export const MOCK_ALBUMS: PhotoAlbum[] = [
       '/images/gallery/bibliotheek-11.jpeg',
       '/images/gallery/bibliotheek-1.jpeg',
       '/images/gallery/bibliotheek-7.jpeg'
-    ]
+    ],
+    createdDate: '2023-06-15',
+    expiryDate: '2025-06-15' // Voorbeeld: vervalt na 2 jaar
   }
 ];
 

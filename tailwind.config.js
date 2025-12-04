@@ -13,9 +13,9 @@ export default {
             },
             colors: {
                 school: {
-                    red: '#dc2626',
-                    green: '#16a34a',
-                    orange: '#f97316',
+                    red: '#b91c1c',
+                    green: '#059669',
+                    orange: '#d97706',
                     dark: '#1f2937',
                     light: '#f3f4f6',
                 }
