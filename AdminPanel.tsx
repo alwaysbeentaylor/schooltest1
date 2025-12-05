@@ -1164,6 +1164,44 @@ export const AdminPanel = () => {
     }
   };
 
+  // Functie om alle data naar localStorage te synchroniseren (altijd, als backup)
+  const syncToLocalStorage = () => {
+    try {
+      const dataToSave = {
+        config,
+        heroImages,
+        news,
+        events,
+        albums,
+        team,
+        ouderwerkgroep,
+        submissions,
+        pages,
+        downloads,
+        enrollments
+      };
+      localStorage.setItem('adminData', JSON.stringify(dataToSave));
+      // Dispatch custom event zodat App.tsx kan luisteren
+      window.dispatchEvent(new CustomEvent('adminDataUpdated'));
+      if (!API_BASE) {
+        console.log('💾 Data opgeslagen naar localStorage en event gedispatched');
+      }
+    } catch (error) {
+      console.error('❌ Fout bij opslaan naar localStorage:', error);
+    }
+  };
+
+  // Sync naar localStorage wanneer data wijzigt (altijd als backup, vooral belangrijk zonder backend)
+  useEffect(() => {
+    if (isAuthenticated) {
+      // Gebruik een kleine delay om te voorkomen dat we te vaak syncen
+      const timeoutId = setTimeout(() => {
+        syncToLocalStorage();
+      }, 100);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [news, events, albums, team, ouderwerkgroep, pages, downloads, enrollments, config, heroImages, submissions, isAuthenticated]);
+
   useEffect(() => {
     if (isAuthenticated) {
       fetchData();
@@ -1298,9 +1336,12 @@ export const AdminPanel = () => {
         ...newsForm,
         date: newsForm.date || new Date().toISOString().split('T')[0]
       };
-      setNews([newItem, ...news]);
+      const updatedNews = [newItem, ...news];
+      setNews(updatedNews);
       setShowNewsModal(false);
       setNewsForm({ title: '', content: '', date: '', expiryDate: '', imageUrl: '', category: 'Algemeen' });
+      // Sync naar localStorage (useEffect zal dit ook doen, maar dit is expliciet)
+      syncToLocalStorage();
       showToast('Nieuws toegevoegd! 📰 (lokaal opgeslagen)', 'success');
       return;
     }
@@ -1318,10 +1359,34 @@ export const AdminPanel = () => {
           setShowNewsModal(false);
           setNewsForm({ title: '', content: '', date: '', expiryDate: '', imageUrl: '', category: 'Algemeen' });
           showToast('Nieuws toegevoegd! 📰', 'success');
+          // Sync naar localStorage als backup
+          syncToLocalStorage();
         }
+      } else {
+        // API call faalde, gebruik lokale state als fallback
+        const newItem: NewsItem = {
+          id: Date.now().toString(),
+          ...newsForm,
+          date: newsForm.date || new Date().toISOString().split('T')[0]
+        };
+        setNews([newItem, ...news]);
+        setShowNewsModal(false);
+        setNewsForm({ title: '', content: '', date: '', expiryDate: '', imageUrl: '', category: 'Algemeen' });
+        syncToLocalStorage();
+        showToast('Nieuws toegevoegd! 📰 (lokaal opgeslagen - backend niet beschikbaar)', 'success');
       }
     } catch (error) {
-      showToast('Fout bij toevoegen nieuws', 'error');
+      // Network error, gebruik lokale state
+      const newItem: NewsItem = {
+        id: Date.now().toString(),
+        ...newsForm,
+        date: newsForm.date || new Date().toISOString().split('T')[0]
+      };
+      setNews([newItem, ...news]);
+      setShowNewsModal(false);
+      setNewsForm({ title: '', content: '', date: '', expiryDate: '', imageUrl: '', category: 'Algemeen' });
+      syncToLocalStorage();
+      showToast('Nieuws toegevoegd! 📰 (lokaal opgeslagen - backend niet bereikbaar)', 'success');
     }
   };
 
@@ -1330,7 +1395,9 @@ export const AdminPanel = () => {
     
     // Als geen backend, gebruik lokale state
     if (!API_BASE) {
-      setNews(news.filter(n => n.id !== id));
+      const updatedNews = news.filter(n => n.id !== id);
+      setNews(updatedNews);
+      syncToLocalStorage();
       showToast('Nieuws verwijderd! 🗑️ (lokaal)', 'success');
       return;
     }
@@ -1355,9 +1422,11 @@ export const AdminPanel = () => {
         grades: ['All'],
         date: eventForm.date || new Date().toISOString().split('T')[0]
       };
-      setEvents([...events, newItem]);
+      const updatedEvents = [...events, newItem];
+      setEvents(updatedEvents);
       setShowEventModal(false);
       setEventForm({ title: '', date: '', type: 'Activiteit', description: '' });
+      syncToLocalStorage();
       showToast('Evenement toegevoegd! 📅 (lokaal opgeslagen)', 'success');
       return;
     }
@@ -1387,7 +1456,9 @@ export const AdminPanel = () => {
     
     // Als geen backend, gebruik lokale state
     if (!API_BASE) {
-      setEvents(events.filter(e => e.id !== id));
+      const updatedEvents = events.filter(e => e.id !== id);
+      setEvents(updatedEvents);
+      syncToLocalStorage();
       showToast('Evenement verwijderd! 🗑️ (lokaal)', 'success');
       return;
     }
@@ -1413,9 +1484,11 @@ export const AdminPanel = () => {
         images: [],
         createdDate: new Date().toISOString().split('T')[0]
       };
-      setAlbums([...albums, newAlbum]);
+      const updatedAlbums = [...albums, newAlbum];
+      setAlbums(updatedAlbums);
       setShowAlbumModal(false);
       setAlbumForm({ title: '', location: 'Algemeen', expiryDate: '' });
+      syncToLocalStorage();
       showToast('Album aangemaakt! 📸 (lokaal opgeslagen)', 'success');
       return;
     }
@@ -1445,7 +1518,9 @@ export const AdminPanel = () => {
     
     // Als geen backend, gebruik lokale state
     if (!API_BASE) {
-      setAlbums(albums.filter(a => a.id !== id));
+      const updatedAlbums = albums.filter(a => a.id !== id);
+      setAlbums(updatedAlbums);
+      syncToLocalStorage();
       showToast('Album verwijderd! 🗑️ (lokaal)', 'success');
       return;
     }
@@ -1469,11 +1544,13 @@ export const AdminPanel = () => {
         uploadedUrls.push(URL.createObjectURL(files[i]));
       }
       // Update album in lokale state
-      setAlbums(albums.map(album => 
+      const updatedAlbums = albums.map(album => 
         album.id === albumId 
           ? { ...album, images: [...album.images, ...uploadedUrls] }
           : album
-      ));
+      );
+      setAlbums(updatedAlbums);
+      syncToLocalStorage();
       showToast(`${uploadedUrls.length} foto's toegevoegd! 📸 (lokaal)`, 'success');
       return;
     }
@@ -1594,9 +1671,11 @@ export const AdminPanel = () => {
         filename: objectUrl,
         uploadDate: new Date().toISOString()
       };
-      setDownloads([...downloads, newDownload]);
+      const updatedDownloads = [...downloads, newDownload];
+      setDownloads(updatedDownloads);
       setShowDownloadModal(false);
       setDownloadForm({ title: '', file: null });
+      syncToLocalStorage();
       showToast('Document toegevoegd! 📄 (lokaal opgeslagen)', 'success');
       return;
     }
@@ -1629,7 +1708,9 @@ export const AdminPanel = () => {
     
     // Als geen backend, gebruik lokale state
     if (!API_BASE) {
-      setDownloads(downloads.filter(d => d.id !== id));
+      const updatedDownloads = downloads.filter(d => d.id !== id);
+      setDownloads(updatedDownloads);
+      syncToLocalStorage();
       showToast('Document verwijderd! 🗑️ (lokaal)', 'success');
       return;
     }

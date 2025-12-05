@@ -2411,18 +2411,45 @@ function App() {
   const [downloads, setDownloads] = useState<Array<{id: string; title: string; filename: string; uploadDate: string}>>([]);
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
 
+  // Functie om data uit localStorage te laden
+  const loadDataFromLocalStorage = () => {
+    try {
+      const savedData = localStorage.getItem('adminData');
+      if (savedData) {
+        const data = JSON.parse(savedData);
+        if (data.config) setConfig(data.config);
+        if (data.heroImages && data.heroImages.length > 0) setHeroImages(data.heroImages);
+        if (data.news && data.news.length > 0) setNews(data.news);
+        if (data.events && data.events.length > 0) setEvents(data.events);
+        if (data.albums && data.albums.length > 0) setAlbums(data.albums);
+        if (data.team && data.team.length > 0) setTeam(data.team);
+        if (data.ouderwerkgroep && data.ouderwerkgroep.length > 0) setOuderwerkgroepActivities(data.ouderwerkgroep);
+        if (data.pages && data.pages.length > 0) setPages(data.pages);
+        if (data.downloads && data.downloads.length > 0) setDownloads(data.downloads);
+        if (data.enrollments && data.enrollments.length > 0) setEnrollments(data.enrollments);
+        return true; // Data geladen
+      }
+    } catch (e) {
+      console.log('Fout bij laden localStorage data:', e);
+    }
+    return false; // Geen data gevonden
+  };
+
   // Fetch data from API on mount
   useEffect(() => {
     const fetchData = async () => {
-      // Als we geen API_BASE hebben (productie), gebruik mock data
+      // Als we geen API_BASE hebben (productie), gebruik localStorage of mock data
       if (!API_BASE) {
-        console.log('Productie modus: gebruik mock data');
-        // Probeer data uit localStorage te laden als fallback
-        const savedPages = localStorage.getItem('pages');
-        if (savedPages) {
-          try {
-            setPages(JSON.parse(savedPages));
-          } catch (e) {}
+        console.log('Productie modus: gebruik localStorage of mock data');
+        const dataLoaded = loadDataFromLocalStorage();
+        if (!dataLoaded) {
+          // Fallback naar pages uit localStorage (oude methode)
+          const savedPages = localStorage.getItem('pages');
+          if (savedPages) {
+            try {
+              setPages(JSON.parse(savedPages));
+            } catch (e) {}
+          }
         }
         setLoading(false);
         return;
@@ -2443,11 +2470,23 @@ function App() {
           if (data.ouderwerkgroep) setOuderwerkgroepActivities(data.ouderwerkgroep);
           if (data.downloads) setDownloads(data.downloads);
           if (data.enrollments) setEnrollments(data.enrollments);
+          // Sla ook op in localStorage als backup
+          try {
+            localStorage.setItem('adminData', JSON.stringify(data));
+          } catch (e) {
+            console.log('Kon niet opslaan in localStorage:', e);
+          }
+        } else {
+          // API response niet OK, gebruik localStorage
+          console.log('Backend response niet OK, gebruik localStorage');
+          loadDataFromLocalStorage();
         }
       } catch (error) {
-        console.log('Backend niet beschikbaar, gebruik mock data');
+        console.log('Backend niet beschikbaar, gebruik localStorage of mock data');
+        // Probeer localStorage als fallback
+        loadDataFromLocalStorage();
       }
-      // Try to load pages from localStorage as fallback
+      // Try to load pages from localStorage as fallback (oude methode voor compatibiliteit)
       const savedPages = localStorage.getItem('pages');
       if (savedPages) {
         try {
@@ -2458,6 +2497,57 @@ function App() {
     };
     fetchData();
   }, []);
+
+  // Luister naar updates van admin panel (wanneer er geen backend is)
+  useEffect(() => {
+    if (!API_BASE) {
+      const handleAdminDataUpdate = () => {
+        console.log('🔄 Admin data bijgewerkt, synchroniseer frontend...');
+        const savedData = localStorage.getItem('adminData');
+        if (savedData) {
+          try {
+            const data = JSON.parse(savedData);
+            if (data.config) setConfig(data.config);
+            if (data.heroImages && data.heroImages.length > 0) setHeroImages(data.heroImages);
+            if (data.news && data.news.length > 0) setNews(data.news);
+            if (data.events && data.events.length > 0) setEvents(data.events);
+            if (data.albums && data.albums.length > 0) setAlbums(data.albums);
+            if (data.team && data.team.length > 0) setTeam(data.team);
+            if (data.ouderwerkgroep && data.ouderwerkgroep.length > 0) setOuderwerkgroepActivities(data.ouderwerkgroep);
+            if (data.pages && data.pages.length > 0) setPages(data.pages);
+            if (data.downloads && data.downloads.length > 0) setDownloads(data.downloads);
+            if (data.enrollments && data.enrollments.length > 0) setEnrollments(data.enrollments);
+            console.log('✅ Frontend data gesynchroniseerd');
+          } catch (e) {
+            console.error('❌ Fout bij synchroniseren data:', e);
+          }
+        }
+      };
+
+      // Luister naar custom event
+      window.addEventListener('adminDataUpdated', handleAdminDataUpdate);
+      
+      // Backup: check elke 2 seconden of data is veranderd (voor het geval events niet werken)
+      const intervalId = setInterval(() => {
+        const savedData = localStorage.getItem('adminData');
+        if (savedData) {
+          const currentData = JSON.stringify({
+            config, heroImages, news, events, albums, team, 
+            ouderwerkgroepActivities, pages, downloads, enrollments
+          });
+          if (savedData !== currentData) {
+            console.log('🔄 Data verschil gedetecteerd, synchroniseer...');
+            handleAdminDataUpdate();
+          }
+        }
+      }, 2000);
+
+      return () => {
+        window.removeEventListener('adminDataUpdated', handleAdminDataUpdate);
+        clearInterval(intervalId);
+      };
+    }
+  }, [config, heroImages, news, events, albums, team, ouderwerkgroepActivities, pages, downloads, enrollments]);
 
   const addSubmission = async (sub: FormSubmission) => {
     // Als geen backend, alleen lokaal opslaan
