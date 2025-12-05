@@ -2394,27 +2394,45 @@ const API_BASE = getApiBase();
 
 // 4. ROOT COMPONENT
 function App() {
-  const [page, setPage] = useState<PageView>('home');
+  // Get initial page from URL hash
+  const getPageFromHash = (): PageView => {
+    const hash = window.location.hash.replace('#/', '').replace('#', '');
+    const validPages: PageView[] = ['home', 'about', 'enroll', 'news', 'calendar', 'info', 'ouderwerkgroep', 'gallery', 'contact', 'admin', 'menu', 'box'];
+    if (validPages.includes(hash as PageView)) {
+      return hash as PageView;
+    }
+    return 'home';
+  };
+
+  const [pageState, setPageState] = useState<PageView>(getPageFromHash());
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [largeText, setLargeText] = useState(false);
   const [loading, setLoading] = useState(true);
   
-  // Check URL hash for admin route
+  // Sync page state with URL hash
   useEffect(() => {
-    const checkHash = () => {
-      const hash = window.location.hash;
-      if (hash === '#/admin' || hash === '#admin') {
-        setPage('admin');
-      }
+    const handleHashChange = () => {
+      const newPage = getPageFromHash();
+      setPageState(newPage);
     };
     
-    // Check on mount
-    checkHash();
-    
-    // Listen for hash changes
-    window.addEventListener('hashchange', checkHash);
-    return () => window.removeEventListener('hashchange', checkHash);
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
+
+  // Custom setPage that also updates URL hash
+  const setPage = (newPage: PageView) => {
+    // Update URL hash (this will trigger hashchange event)
+    const newHash = newPage === 'home' ? '' : `#/${newPage}`;
+    if (window.location.hash !== newHash && window.location.hash !== `#${newPage}`) {
+      window.history.pushState(null, '', newHash || window.location.pathname);
+    }
+    setPageState(newPage);
+    window.scrollTo(0, 0);
+  };
+
+  // Alias for backwards compatibility
+  const page = pageState;
 
   // Central State - fetched from API
   const [config, setConfig] = useState<SiteConfig>(DEFAULT_CONFIG);
