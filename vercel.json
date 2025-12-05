@@ -1,4 +1,6 @@
 {
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
   "rewrites": [
     {
       "source": "/",
@@ -15,6 +17,14 @@
     {
       "source": "/documents/:path*",
       "destination": "/public/documents/:path*"
+    },
+    {
+      "source": "/css/:path*",
+      "destination": "/pages/css/:path*"
+    },
+    {
+      "source": "/js/:path*",
+      "destination": "/pages/js/:path*"
     }
   ],
   "headers": [
