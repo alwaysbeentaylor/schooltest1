@@ -1754,8 +1754,8 @@ export const AdminPanel = () => {
     formData.append('file', file);
     formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
     formData.append('folder', 'school-documents');
-    formData.append('resource_type', 'auto'); // Auto-detect file type (PDF, images, etc.)
-    formData.append('access_mode', 'public'); // Make sure it's publicly accessible
+    // Note: resource_type and access_mode are set in the upload preset, not here
+    // For unsigned uploads, only specific parameters are allowed
     
     const response = await fetch(
       `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`,
@@ -1771,8 +1771,8 @@ export const AdminPanel = () => {
     const data = await response.json();
     console.log('Cloudinary upload success:', data);
     
-    // Return secure URL with download parameter for PDFs
-    if (data.resource_type === 'raw' || file.type.includes('pdf') || file.type.includes('document')) {
+    // Return secure URL with download parameter for PDFs/documents
+    if (data.resource_type === 'raw' || file.type.includes('pdf') || file.type.includes('document') || file.name.endsWith('.pdf')) {
       // For documents, add fl_attachment to force download
       return `${data.secure_url}?fl_attachment`;
     }
