@@ -1,13 +1,56 @@
 {
-  "public": true,
   "rewrites": [
     {
       "source": "/",
       "destination": "/pages/index.html"
     },
     {
+      "source": "/about.html",
+      "destination": "/pages/about.html"
+    },
+    {
+      "source": "/enroll.html",
+      "destination": "/pages/enroll.html"
+    },
+    {
+      "source": "/news.html",
+      "destination": "/pages/news.html"
+    },
+    {
+      "source": "/calendar.html",
+      "destination": "/pages/calendar.html"
+    },
+    {
+      "source": "/info.html",
+      "destination": "/pages/info.html"
+    },
+    {
+      "source": "/ouderwerkgroep.html",
+      "destination": "/pages/ouderwerkgroep.html"
+    },
+    {
+      "source": "/gallery.html",
+      "destination": "/pages/gallery.html"
+    },
+    {
+      "source": "/contact.html",
+      "destination": "/pages/contact.html"
+    },
+    {
+      "source": "/box.html",
+      "destination": "/pages/box.html"
+    },
+    {
       "source": "/pages/(.*)",
       "destination": "/pages/$1"
+    },
+    {
+      "source": "/css/(.*)",
+      "destination": "/pages/css/$1"
+    },
+    {
+      "source": "/js/(.*)",
+      "destination": "/pages/js/$1"
     },
     {
       "source": "/images/(.*)",
