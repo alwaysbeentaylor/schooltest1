@@ -2617,32 +2617,34 @@ function App() {
       status: 'nieuw'
     };
 
-    // Als geen backend, alleen lokaal opslaan
-    if (!API_BASE) {
-      setEnrollments([newEnrollment, ...enrollments]);
-      return Promise.resolve();
-    }
+    // Always save to local state first (for immediate UI update)
+    setEnrollments([newEnrollment, ...enrollments]);
 
+    // Try to save to Vercel KV via API
     try {
-      const response = await fetch(`${API_BASE}/enrollments`, {
+      const response = await fetch('/api/enrollments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newEnrollment)
       });
+      
       if (response.ok) {
         const data = await response.json();
-        setEnrollments([data.item, ...enrollments]);
+        console.log('✅ Inschrijving opgeslagen in Vercel KV:', data);
+        // Update local state with the saved item (in case server added anything)
+        if (data.item) {
+          setEnrollments([data.item, ...enrollments.filter(e => e.id !== newEnrollment.id)]);
+        }
         return Promise.resolve();
       } else {
-        // Als response niet ok is, gebruik fallback maar gooi geen error
-        console.warn('Backend response niet ok, gebruik lokale opslag');
-        setEnrollments([newEnrollment, ...enrollments]);
+        const errorData = await response.json().catch(() => ({}));
+        console.warn('⚠️ KV response niet OK:', response.status, errorData);
+        // Keep local state - it's already saved there
         return Promise.resolve();
       }
     } catch (error) {
-      console.log('Backend niet beschikbaar, gebruik lokale opslag');
-      // Fallback to local state - dit is ok, we gooien geen error
-      setEnrollments([newEnrollment, ...enrollments]);
+      console.warn('⚠️ Fout bij opslaan naar KV, gebruik lokale opslag:', error);
+      // Keep local state - it's already saved there
       return Promise.resolve();
     }
   };
