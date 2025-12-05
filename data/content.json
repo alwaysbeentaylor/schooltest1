@@ -19,15 +19,6 @@
   ],
   "news": [
     {
-      "id": "1764901519256",
-      "title": "2384",
-      "content": "sgdfsgfdsgfdggfdf",
-      "date": "2025-12-05",
-      "expiryDate": "",
-      "imageUrl": "https://res.cloudinary.com/dgxcfm2nk/image/upload/v1764901517/vbs-school/zrr3cjlcnkrlg2nnyfq9.png",
-      "category": "Algemeen"
-    },
-    {
       "id": "1764892089505",
       "title": "dfggdfgd",
       "content": "AI configuratie ontbreekt of API key niet gevonden. Controleer je .env settings.",
