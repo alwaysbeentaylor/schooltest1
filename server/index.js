@@ -117,6 +117,84 @@ const writeData = (data) => {
   fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
 };
 
+// ============ GITHUB AUTO-PUSH FUNCTIONALITY ============
+// Push uploaded files automatically to GitHub via API
+const pushToGitHubViaAPI = async (filePath, category, fileName) => {
+  try {
+    // Check if auto-push is enabled
+    if (process.env.GIT_AUTO_PUSH !== 'true') {
+      console.log('📝 Git auto-push is uitgeschakeld (zet GIT_AUTO_PUSH=true in .env)');
+      return;
+    }
+
+    // Check if GitHub token is available
+    if (!process.env.GITHUB_TOKEN) {
+      console.log('⚠️  GITHUB_TOKEN niet gevonden in environment variables');
+      return;
+    }
+
+    // Get repository info (format: owner/repo)
+    const repo = process.env.GITHUB_REPO;
+    if (!repo) {
+      console.log('⚠️  GITHUB_REPO niet gevonden (format: owner/repo)');
+      return;
+    }
+
+    // Read file and convert to base64
+    const fileBuffer = await fs.promises.readFile(filePath);
+    const fileContent = fileBuffer.toString('base64');
+
+    // Construct relative path from project root
+    const relativePath = `public/images/${category}/${fileName}`;
+
+    // Check if file already exists in GitHub
+    const checkUrl = `https://api.github.com/repos/${repo}/contents/${relativePath}`;
+    let sha = null;
+    
+    try {
+      const checkResponse = await fetch(checkUrl, {
+        headers: {
+          'Authorization': `token ${process.env.GITHUB_TOKEN}`,
+          'Accept': 'application/vnd.github.v3+json'
+        }
+      });
+      
+      if (checkResponse.ok) {
+        const existingFile = await checkResponse.json();
+        sha = existingFile.sha; // Need SHA for updates
+      }
+    } catch (error) {
+      // File doesn't exist yet, that's fine
+    }
+
+    // Push to GitHub
+    const response = await fetch(checkUrl, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `token ${process.env.GITHUB_TOKEN}`,
+        'Accept': 'application/vnd.github.v3+json',
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        message: `Auto-upload: ${category} image - ${fileName}`,
+        content: fileContent,
+        branch: 'main',
+        ...(sha && { sha }) // Include SHA if updating existing file
+      })
+    });
+
+    if (response.ok) {
+      console.log(`✅ Foto gepusht naar GitHub: ${relativePath}`);
+    } else {
+      const errorData = await response.json();
+      console.error(`❌ Fout bij GitHub push: ${errorData.message || 'Unknown error'}`);
+    }
+  } catch (error) {
+    console.error('❌ Fout bij GitHub API push:', error.message);
+    // Fail silently - we don't want uploads to fail if git push fails
+  }
+};
+
 // Multer configuration for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -192,15 +270,22 @@ app.get('/api/hero-images', (req, res) => {
   }
 });
 
-app.post('/api/hero-images', upload.single('image'), (req, res) => {
+app.post('/api/hero-images', upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'Geen bestand geüpload' });
     }
     const imagePath = `/images/hero/${req.file.filename}`;
+    const fullPath = path.join(__dirname, '../public/images/hero', req.file.filename);
     const data = readData();
     data.heroImages.push(imagePath);
     writeData(data);
+    
+    // Push naar GitHub in de achtergrond (niet wachten op response)
+    pushToGitHubViaAPI(fullPath, 'hero', req.file.filename).catch(err => {
+      console.error('Background git push error:', err);
+    });
+    
     res.json({ success: true, path: imagePath });
   } catch (error) {
     res.status(500).json({ error: 'Fout bij uploaden afbeelding' });
@@ -412,7 +497,7 @@ app.delete('/api/albums/:id', (req, res) => {
 });
 
 // Add image to album
-app.post('/api/albums/:id/images', upload.array('images', 20), (req, res) => {
+app.post('/api/albums/:id/images', upload.array('images', 20), async (req, res) => {
   try {
     if (!req.files || req.files.length === 0) {
       return res.status(400).json({ error: 'Geen bestanden geüpload' });
@@ -428,6 +513,15 @@ app.post('/api/albums/:id/images', upload.array('images', 20), (req, res) => {
       album.coverImage = newImages[0];
     }
     writeData(data);
+    
+    // Push alle foto's naar GitHub in de achtergrond
+    req.files.forEach(file => {
+      const fullPath = path.join(__dirname, '../public/images/gallery', file.filename);
+      pushToGitHubViaAPI(fullPath, 'gallery', file.filename).catch(err => {
+        console.error('Background git push error:', err);
+      });
+    });
+    
     res.json({ success: true, images: newImages });
   } catch (error) {
     res.status(500).json({ error: 'Fout bij uploaden afbeeldingen' });
@@ -525,7 +619,7 @@ app.delete('/api/team/:id', (req, res) => {
 });
 
 // Upload team member image
-app.post('/api/team/:id/image', upload.single('image'), (req, res) => {
+app.post('/api/team/:id/image', upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'Geen bestand geüpload' });
@@ -543,7 +637,14 @@ app.post('/api/team/:id/image', upload.single('image'), (req, res) => {
       }
     }
     member.imageUrl = `/images/team/${req.file.filename}`;
+    const fullPath = path.join(__dirname, '../public/images/team', req.file.filename);
     writeData(data);
+    
+    // Push naar GitHub in de achtergrond
+    pushToGitHubViaAPI(fullPath, 'team', req.file.filename).catch(err => {
+      console.error('Background git push error:', err);
+    });
+    
     res.json({ success: true, path: member.imageUrl });
   } catch (error) {
     res.status(500).json({ error: 'Fout bij uploaden afbeelding' });
@@ -615,7 +716,7 @@ app.delete('/api/ouderwerkgroep/:id', (req, res) => {
 });
 
 // Upload ouderwerkgroep activity image
-app.post('/api/ouderwerkgroep/:id/image', upload.single('image'), (req, res) => {
+app.post('/api/ouderwerkgroep/:id/image', upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'Geen bestand geüpload' });
@@ -633,7 +734,14 @@ app.post('/api/ouderwerkgroep/:id/image', upload.single('image'), (req, res) => 
       }
     }
     activity.image = `/images/ouderwerkgroep/${req.file.filename}`;
+    const fullPath = path.join(__dirname, '../public/images/ouderwerkgroep', req.file.filename);
     writeData(data);
+    
+    // Push naar GitHub in de achtergrond
+    pushToGitHubViaAPI(fullPath, 'ouderwerkgroep', req.file.filename).catch(err => {
+      console.error('Background git push error:', err);
+    });
+    
     res.json({ success: true, path: activity.image });
   } catch (error) {
     res.status(500).json({ error: 'Fout bij uploaden afbeelding' });
@@ -721,16 +829,49 @@ app.put('/api/pages', (req, res) => {
 });
 
 // ============ GENERIC IMAGE UPLOAD ============
-app.post('/api/upload/:category', upload.single('image'), (req, res) => {
+app.post('/api/upload/:category', upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ error: 'Geen bestand geüpload' });
     }
     const category = req.params.category;
     const imagePath = `/images/${category}/${req.file.filename}`;
+    const fullPath = path.join(__dirname, '../public/images', category, req.file.filename);
+    
+    // Push naar GitHub in de achtergrond (niet wachten op response)
+    pushToGitHubViaAPI(fullPath, category, req.file.filename).catch(err => {
+      console.error('Background git push error:', err);
+    });
+    
     res.json({ success: true, path: imagePath });
   } catch (error) {
     res.status(500).json({ error: 'Fout bij uploaden afbeelding' });
+  }
+});
+
+// ============ MULTIPLE IMAGE UPLOAD ============
+app.post('/api/upload-multiple', upload.array('images', 20), async (req, res) => {
+  try {
+    if (!req.files || req.files.length === 0) {
+      return res.status(400).json({ error: 'Geen bestanden geüpload' });
+    }
+    
+    const category = req.body.category || 'gallery';
+    const paths = req.files.map(file => {
+      const imagePath = `/images/${category}/${file.filename}`;
+      const fullPath = path.join(__dirname, '../public/images', category, file.filename);
+      
+      // Push naar GitHub in de achtergrond voor elk bestand
+      pushToGitHubViaAPI(fullPath, category, file.filename).catch(err => {
+        console.error('Background git push error:', err);
+      });
+      
+      return imagePath;
+    });
+    
+    res.json({ success: true, paths });
+  } catch (error) {
+    res.status(500).json({ error: 'Fout bij uploaden afbeeldingen' });
   }
 });
 
