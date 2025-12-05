@@ -348,6 +348,20 @@ const ImageUploader = ({
     setUploading(true);
     const uploadedPaths: string[] = [];
 
+    // Als er geen backend is, gebruik lokale object URLs
+    if (!API_BASE) {
+      for (let i = 0; i < files.length; i++) {
+        const objectUrl = URL.createObjectURL(files[i]);
+        uploadedPaths.push(objectUrl);
+      }
+      setUploading(false);
+      if (uploadedPaths.length > 0) {
+        onUpload(uploadedPaths);
+      }
+      return;
+    }
+
+    // Backend beschikbaar - upload naar server
     for (let i = 0; i < files.length; i++) {
       const formData = new FormData();
       formData.append('image', files[i]);
@@ -357,9 +371,11 @@ const ImageUploader = ({
           method: 'POST',
           body: formData
         });
-        const data = await response.json();
-        if (data.success) {
-          uploadedPaths.push(data.path);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success) {
+            uploadedPaths.push(data.path);
+          }
         }
       } catch (error) {
         console.error('Upload error:', error);
@@ -1275,18 +1291,34 @@ export const AdminPanel = () => {
   };
 
   const handleAddNews = async () => {
+    // Als geen backend, gebruik lokale state
+    if (!API_BASE) {
+      const newItem: NewsItem = {
+        id: Date.now().toString(),
+        ...newsForm,
+        date: newsForm.date || new Date().toISOString().split('T')[0]
+      };
+      setNews([newItem, ...news]);
+      setShowNewsModal(false);
+      setNewsForm({ title: '', content: '', date: '', expiryDate: '', imageUrl: '', category: 'Algemeen' });
+      showToast('Nieuws toegevoegd! 📰 (lokaal opgeslagen)', 'success');
+      return;
+    }
+
     try {
       const response = await fetch(`${API_BASE}/news`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(newsForm)
       });
-      const data = await response.json();
-      if (data.success) {
-        setNews([data.item, ...news]);
-        setShowNewsModal(false);
-        setNewsForm({ title: '', content: '', date: '', expiryDate: '', imageUrl: '', category: 'Algemeen' });
-        showToast('Nieuws toegevoegd! 📰', 'success');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setNews([data.item, ...news]);
+          setShowNewsModal(false);
+          setNewsForm({ title: '', content: '', date: '', expiryDate: '', imageUrl: '', category: 'Algemeen' });
+          showToast('Nieuws toegevoegd! 📰', 'success');
+        }
       }
     } catch (error) {
       showToast('Fout bij toevoegen nieuws', 'error');
@@ -1295,6 +1327,14 @@ export const AdminPanel = () => {
 
   const handleDeleteNews = async (id: string) => {
     if (!confirm('Weet je zeker dat je dit wilt verwijderen?')) return;
+    
+    // Als geen backend, gebruik lokale state
+    if (!API_BASE) {
+      setNews(news.filter(n => n.id !== id));
+      showToast('Nieuws verwijderd! 🗑️ (lokaal)', 'success');
+      return;
+    }
+
     try {
       const response = await fetch(`${API_BASE}/news/${id}`, { method: 'DELETE' });
       if (response.ok) {
@@ -1307,18 +1347,35 @@ export const AdminPanel = () => {
   };
 
   const handleAddEvent = async () => {
+    // Als geen backend, gebruik lokale state
+    if (!API_BASE) {
+      const newItem: CalendarEvent = {
+        id: Date.now().toString(),
+        ...eventForm,
+        grades: ['All'],
+        date: eventForm.date || new Date().toISOString().split('T')[0]
+      };
+      setEvents([...events, newItem]);
+      setShowEventModal(false);
+      setEventForm({ title: '', date: '', type: 'Activiteit', description: '' });
+      showToast('Evenement toegevoegd! 📅 (lokaal opgeslagen)', 'success');
+      return;
+    }
+
     try {
       const response = await fetch(`${API_BASE}/events`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...eventForm, grades: ['All'] })
       });
-      const data = await response.json();
-      if (data.success) {
-        setEvents([...events, data.item]);
-        setShowEventModal(false);
-        setEventForm({ title: '', date: '', type: 'Activiteit', description: '' });
-        showToast('Evenement toegevoegd! 📅', 'success');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setEvents([...events, data.item]);
+          setShowEventModal(false);
+          setEventForm({ title: '', date: '', type: 'Activiteit', description: '' });
+          showToast('Evenement toegevoegd! 📅', 'success');
+        }
       }
     } catch (error) {
       showToast('Fout bij toevoegen evenement', 'error');
@@ -1327,6 +1384,14 @@ export const AdminPanel = () => {
 
   const handleDeleteEvent = async (id: string) => {
     if (!confirm('Weet je zeker dat je dit wilt verwijderen?')) return;
+    
+    // Als geen backend, gebruik lokale state
+    if (!API_BASE) {
+      setEvents(events.filter(e => e.id !== id));
+      showToast('Evenement verwijderd! 🗑️ (lokaal)', 'success');
+      return;
+    }
+
     try {
       const response = await fetch(`${API_BASE}/events/${id}`, { method: 'DELETE' });
       if (response.ok) {
@@ -1339,18 +1404,36 @@ export const AdminPanel = () => {
   };
 
   const handleAddAlbum = async () => {
+    // Als geen backend, gebruik lokale state
+    if (!API_BASE) {
+      const newAlbum: PhotoAlbum = {
+        id: Date.now().toString(),
+        ...albumForm,
+        coverImage: '',
+        images: [],
+        createdDate: new Date().toISOString().split('T')[0]
+      };
+      setAlbums([...albums, newAlbum]);
+      setShowAlbumModal(false);
+      setAlbumForm({ title: '', location: 'Algemeen', expiryDate: '' });
+      showToast('Album aangemaakt! 📸 (lokaal opgeslagen)', 'success');
+      return;
+    }
+
     try {
       const response = await fetch(`${API_BASE}/albums`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(albumForm)
       });
-      const data = await response.json();
-      if (data.success) {
-        setAlbums([...albums, data.item]);
-        setShowAlbumModal(false);
-        setAlbumForm({ title: '', location: 'Algemeen', expiryDate: '' });
-        showToast('Album aangemaakt! 📸', 'success');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setAlbums([...albums, data.item]);
+          setShowAlbumModal(false);
+          setAlbumForm({ title: '', location: 'Algemeen', expiryDate: '' });
+          showToast('Album aangemaakt! 📸', 'success');
+        }
       }
     } catch (error) {
       showToast('Fout bij aanmaken album', 'error');
@@ -1359,6 +1442,14 @@ export const AdminPanel = () => {
 
   const handleDeleteAlbum = async (id: string) => {
     if (!confirm('Weet je zeker dat je dit album wilt verwijderen? Alle foto\'s worden ook verwijderd!')) return;
+    
+    // Als geen backend, gebruik lokale state
+    if (!API_BASE) {
+      setAlbums(albums.filter(a => a.id !== id));
+      showToast('Album verwijderd! 🗑️ (lokaal)', 'success');
+      return;
+    }
+
     try {
       const response = await fetch(`${API_BASE}/albums/${id}`, { method: 'DELETE' });
       if (response.ok) {
@@ -1371,6 +1462,22 @@ export const AdminPanel = () => {
   };
 
   const handleUploadToAlbum = async (albumId: string, files: FileList) => {
+    // Als geen backend, gebruik lokale object URLs
+    if (!API_BASE) {
+      const uploadedUrls: string[] = [];
+      for (let i = 0; i < files.length; i++) {
+        uploadedUrls.push(URL.createObjectURL(files[i]));
+      }
+      // Update album in lokale state
+      setAlbums(albums.map(album => 
+        album.id === albumId 
+          ? { ...album, images: [...album.images, ...uploadedUrls] }
+          : album
+      ));
+      showToast(`${uploadedUrls.length} foto's toegevoegd! 📸 (lokaal)`, 'success');
+      return;
+    }
+
     const formData = new FormData();
     for (let i = 0; i < files.length; i++) {
       formData.append('images', files[i]);
@@ -1380,10 +1487,12 @@ export const AdminPanel = () => {
         method: 'POST',
         body: formData
       });
-      const data = await response.json();
-      if (data.success) {
-        fetchData();
-        showToast(`${data.images.length} foto's toegevoegd! 📸`, 'success');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          fetchData();
+          showToast(`${data.images.length} foto's toegevoegd! 📸`, 'success');
+        }
       }
     } catch (error) {
       showToast('Fout bij uploaden', 'error');
@@ -1476,6 +1585,22 @@ export const AdminPanel = () => {
       return;
     }
     
+    // Als geen backend, gebruik lokale state met object URL
+    if (!API_BASE) {
+      const objectUrl = URL.createObjectURL(downloadForm.file);
+      const newDownload = {
+        id: Date.now().toString(),
+        title: downloadForm.title,
+        filename: objectUrl,
+        uploadDate: new Date().toISOString()
+      };
+      setDownloads([...downloads, newDownload]);
+      setShowDownloadModal(false);
+      setDownloadForm({ title: '', file: null });
+      showToast('Document toegevoegd! 📄 (lokaal opgeslagen)', 'success');
+      return;
+    }
+    
     const formData = new FormData();
     formData.append('document', downloadForm.file);
     formData.append('title', downloadForm.title);
@@ -1485,12 +1610,14 @@ export const AdminPanel = () => {
         method: 'POST',
         body: formData
       });
-      const data = await response.json();
-      if (data.success) {
-        setDownloads([...downloads, data.item]);
-        setShowDownloadModal(false);
-        setDownloadForm({ title: '', file: null });
-        showToast('Document toegevoegd! 📄', 'success');
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setDownloads([...downloads, data.item]);
+          setShowDownloadModal(false);
+          setDownloadForm({ title: '', file: null });
+          showToast('Document toegevoegd! 📄', 'success');
+        }
       }
     } catch (error) {
       showToast('Fout bij uploaden document', 'error');
@@ -1499,6 +1626,14 @@ export const AdminPanel = () => {
 
   const handleDeleteDownload = async (id: string) => {
     if (!confirm('Weet je zeker dat je dit document wilt verwijderen?')) return;
+    
+    // Als geen backend, gebruik lokale state
+    if (!API_BASE) {
+      setDownloads(downloads.filter(d => d.id !== id));
+      showToast('Document verwijderd! 🗑️ (lokaal)', 'success');
+      return;
+    }
+
     try {
       const response = await fetch(`${API_BASE}/downloads/${id}`, { method: 'DELETE' });
       if (response.ok) {

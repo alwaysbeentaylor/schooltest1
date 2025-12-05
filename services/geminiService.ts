@@ -4,12 +4,14 @@ import { ChatMessage } from "../types";
 // Initialize Gemini Safely
 const getAI = () => {
     try {
-        // Veiligheidscheck: controleer of process.env bestaat voordat we het aanroepen
-        // Dit voorkomt de "White Screen of Death" in browsers waar process niet gedefinieerd is.
-        const apiKey = (typeof process !== 'undefined' && process.env) ? process.env.API_KEY : '';
+        // Gebruik import.meta.env voor Vite (werkt in browser)
+        // Fallback naar process.env voor compatibiliteit
+        const apiKey = import.meta.env.VITE_GEMINI_API_KEY 
+            || import.meta.env.GEMINI_API_KEY
+            || (typeof process !== 'undefined' && process.env ? process.env.GEMINI_API_KEY : '');
         
         if (!apiKey) {
-            console.warn("API Key ontbreekt of process.env is niet beschikbaar.");
+            console.warn("API Key ontbreekt. Stel VITE_GEMINI_API_KEY in Vercel environment variables in.");
             return null;
         }
         return new GoogleGenAI({ apiKey });
