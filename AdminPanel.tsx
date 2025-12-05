@@ -1856,7 +1856,7 @@ export const AdminPanel = () => {
             Inloggen
           </ColorButton>
           
-          <p className="text-xs text-gray-400 mt-6">Tip: het wachtwoord is "admin"</p>
+          {/* Wachtwoord tip verwijderd voor productie */}
         </div>
         {toast && <Toast {...toast} onClose={() => setToast(null)} />}
       </div>

@@ -41,14 +41,11 @@ export interface SiteData {
 // Fetch current data from GitHub
 export const fetchDataFromGitHub = async (): Promise<SiteData | null> => {
   try {
-    // First try to fetch from the raw content URL (faster, no auth needed)
-    const rawUrl = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${GITHUB_BRANCH}/${GITHUB_DATA_PATH}`;
-    const response = await fetch(rawUrl, {
-      cache: 'no-store', // Always get fresh data
-      headers: {
-        'Cache-Control': 'no-cache'
-      }
-    });
+    // Add cache-busting timestamp to URL to get fresh data
+    const timestamp = Date.now();
+    const rawUrl = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${GITHUB_BRANCH}/${GITHUB_DATA_PATH}?t=${timestamp}`;
+    
+    const response = await fetch(rawUrl);
     
     if (response.ok) {
       const data = await response.json();
@@ -56,7 +53,7 @@ export const fetchDataFromGitHub = async (): Promise<SiteData | null> => {
       return data;
     }
     
-    console.warn('Could not fetch from raw URL, trying API...');
+    console.warn('Could not fetch from raw URL');
     return null;
   } catch (error) {
     console.error('Error fetching data from GitHub:', error);
