@@ -9,25 +9,57 @@ import {
   User, Baby, Building2, Stethoscope, Languages, ChevronDown, ChevronUp, RefreshCw
 } from 'lucide-react';
 import { generateNewsContent } from './services/geminiService';
+import { fetchDataFromGitHub, saveDataToGitHub, isGitHubAvailable } from './services/dataService';
 import { MOCK_NEWS, MOCK_EVENTS, MOCK_ALBUMS, MOCK_TEAM, DEFAULT_CONFIG, MOCK_SUBMISSIONS, HERO_IMAGES } from './constants';
 
+// ============ CLOUDINARY CONFIGURATIE ============
+const CLOUDINARY_CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'dgxcfm2nk';
+const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'school_uploads';
+
+// Upload functie naar Cloudinary
+const uploadToCloudinary = async (file: File): Promise<string> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+  formData.append('folder', 'vbs-school');
+  
+  try {
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/image/upload`,
+      { method: 'POST', body: formData }
+    );
+    
+    if (!response.ok) {
+      throw new Error('Upload failed');
+    }
+    
+    const data = await response.json();
+    return data.secure_url;
+  } catch (error) {
+    console.error('Cloudinary upload error:', error);
+    throw error;
+  }
+};
+
+// ============ GITHUB API CONFIGURATIE ============
+const GITHUB_REPO = 'SchoolWebsiteKDG/VSB'; // Pas aan naar jouw repo
+const GITHUB_DATA_PATH = 'data/content.json';
+
+// Admin wachtwoord
+const ADMIN_PASSWORD = 'sintmaarten2026';
+
 // Detecteer of we lokaal of in productie draaien
-// 1. Check environment variable (voor Vercel of andere deployments)
-// 2. Check of we lokaal draaien (localhost of 127.0.0.1)
-// 3. Anders: gebruik lege string (fallback naar mock data)
 const getApiBase = (): string => {
-  // Check voor environment variable (VITE_API_URL)
   if (import.meta.env.VITE_API_URL) {
     return import.meta.env.VITE_API_URL;
   }
   
-  // Check of we lokaal draaien
   const hostname = window.location.hostname;
   if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '') {
     return 'http://localhost:3001/api';
   }
   
-  // Productie zonder backend - gebruik mock data
+  // Productie - we gebruiken nu Cloudinary + GitHub API
   return '';
 };
 
@@ -324,7 +356,7 @@ const StatsCard = ({
   );
 };
 
-// Image Upload Component
+// Image Upload Component - Nu met Cloudinary!
 const ImageUploader = ({
   onUpload,
   currentImage,
@@ -340,49 +372,33 @@ const ImageUploader = ({
 }) => {
   const [uploading, setUploading] = useState(false);
   const [dragOver, setDragOver] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleUpload = async (files: FileList | null) => {
     if (!files || files.length === 0) return;
     
     setUploading(true);
+    setUploadProgress(0);
     const uploadedPaths: string[] = [];
+    const totalFiles = files.length;
 
-    // Als er geen backend is, gebruik lokale object URLs
-    if (!API_BASE) {
-      for (let i = 0; i < files.length; i++) {
+    // ALTIJD Cloudinary gebruiken voor uploads (werkt overal!)
+    for (let i = 0; i < files.length; i++) {
+      try {
+        const cloudinaryUrl = await uploadToCloudinary(files[i]);
+        uploadedPaths.push(cloudinaryUrl);
+        setUploadProgress(Math.round(((i + 1) / totalFiles) * 100));
+      } catch (error) {
+        console.error('Upload error voor bestand', i, error);
+        // Fallback naar object URL als Cloudinary faalt
         const objectUrl = URL.createObjectURL(files[i]);
         uploadedPaths.push(objectUrl);
-      }
-      setUploading(false);
-      if (uploadedPaths.length > 0) {
-        onUpload(uploadedPaths);
-      }
-      return;
-    }
-
-    // Backend beschikbaar - upload naar server
-    for (let i = 0; i < files.length; i++) {
-      const formData = new FormData();
-      formData.append('image', files[i]);
-
-      try {
-        const response = await fetch(`${API_BASE}/upload/${category}`, {
-          method: 'POST',
-          body: formData
-        });
-        if (response.ok) {
-          const data = await response.json();
-          if (data.success) {
-            uploadedPaths.push(data.path);
-          }
-        }
-      } catch (error) {
-        console.error('Upload error:', error);
       }
     }
 
     setUploading(false);
+    setUploadProgress(0);
     if (uploadedPaths.length > 0) {
       onUpload(uploadedPaths);
     }
@@ -423,14 +439,27 @@ const ImageUploader = ({
       ) : (
         <div onClick={() => inputRef.current?.click()} className="cursor-pointer">
           {uploading ? (
-            <Loader2 size={48} className="mx-auto text-emerald-500 animate-spin mb-4" />
+            <div className="flex flex-col items-center">
+              <Loader2 size={48} className="mx-auto text-emerald-500 animate-spin mb-4" />
+              <div className="w-full max-w-xs bg-gray-200 rounded-full h-2 mb-2">
+                <div 
+                  className="bg-emerald-500 h-2 rounded-full transition-all duration-300" 
+                  style={{ width: `${uploadProgress}%` }}
+                />
+              </div>
+              <p className="text-emerald-600 font-medium text-sm">Uploaden naar cloud... {uploadProgress}%</p>
+            </div>
           ) : (
             <div className="bg-gradient-to-r from-emerald-500 to-green-600 w-12 h-12 md:w-16 md:h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
               <Upload size={24} className="text-white" />
             </div>
           )}
-          <p className="font-bold text-gray-700 text-base md:text-lg mb-2">{label}</p>
-          <p className="text-gray-500 text-xs md:text-sm">Sleep foto's hierheen of klik om te selecteren</p>
+          {!uploading && (
+            <>
+              <p className="font-bold text-gray-700 text-base md:text-lg mb-2">{label}</p>
+              <p className="text-gray-500 text-xs md:text-sm">Sleep foto's hierheen of klik om te selecteren</p>
+            </>
+          )}
         </div>
       )}
     </div>
@@ -1105,18 +1134,62 @@ export const AdminPanel = () => {
   const [downloadForm, setDownloadForm] = useState({ title: '', file: null as File | null });
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // Fetch all data
+  // Fetch all data - now with GitHub support!
   const fetchData = async () => {
     setLoading(true);
     
-    // Als we geen API_BASE hebben (productie zonder backend), gebruik localStorage of mock data
-    if (!API_BASE) {
-      console.log('Geen backend beschikbaar, gebruik lokale opslag of mock data');
-      // Probeer data uit localStorage te laden
+    // STAP 1: Probeer data van GitHub te laden (werkt altijd, ook in productie)
+    const githubData = await fetchDataFromGitHub();
+    if (githubData) {
+      if (githubData.config) setConfig(githubData.config);
+      if (githubData.heroImages && githubData.heroImages.length > 0) setHeroImages(githubData.heroImages);
+      if (githubData.news && githubData.news.length > 0) setNews(githubData.news);
+      if (githubData.events && githubData.events.length > 0) setEvents(githubData.events);
+      if (githubData.albums && githubData.albums.length > 0) setAlbums(githubData.albums);
+      if (githubData.team && githubData.team.length > 0) setTeam(githubData.team);
+      if (githubData.ouderwerkgroep && githubData.ouderwerkgroep.length > 0) setOuderwerkgroep(githubData.ouderwerkgroep);
+      if (githubData.submissions && githubData.submissions.length > 0) setSubmissions(githubData.submissions);
+      if (githubData.pages && githubData.pages.length > 0) setPages(githubData.pages);
+      if (githubData.downloads && githubData.downloads.length > 0) setDownloads(githubData.downloads);
+      if (githubData.enrollments && githubData.enrollments.length > 0) setEnrollments(githubData.enrollments);
+      setLoading(false);
+      
+      const hasGitHubToken = isGitHubAvailable();
+      if (hasGitHubToken) {
+        showToast('✅ Data geladen! Wijzigingen worden opgeslagen naar GitHub.', 'success');
+      } else {
+        showToast('✅ Data geladen! Wijzigingen worden lokaal opgeslagen.', 'success');
+      }
+      return;
+    }
+    
+    // STAP 2: Fallback naar localStorage
+    try {
+      const savedData = localStorage.getItem('adminData');
+      if (savedData) {
+        const data = JSON.parse(savedData);
+        if (data.config) setConfig(data.config);
+        if (data.heroImages && data.heroImages.length > 0) setHeroImages(data.heroImages);
+        if (data.news && data.news.length > 0) setNews(data.news);
+        if (data.events && data.events.length > 0) setEvents(data.events);
+        if (data.albums && data.albums.length > 0) setAlbums(data.albums);
+        if (data.team && data.team.length > 0) setTeam(data.team);
+        if (data.ouderwerkgroep && data.ouderwerkgroep.length > 0) setOuderwerkgroep(data.ouderwerkgroep);
+        if (data.submissions && data.submissions.length > 0) setSubmissions(data.submissions);
+        if (data.pages && data.pages.length > 0) setPages(data.pages);
+        if (data.downloads && data.downloads.length > 0) setDownloads(data.downloads);
+        if (data.enrollments && data.enrollments.length > 0) setEnrollments(data.enrollments);
+      }
+    } catch (e) {
+      console.log('Geen opgeslagen data gevonden, gebruik mock data');
+    }
+    
+    // STAP 3: Als we een lokale backend hebben, probeer die
+    if (API_BASE) {
       try {
-        const savedData = localStorage.getItem('adminData');
-        if (savedData) {
-          const data = JSON.parse(savedData);
+        const response = await fetch(`${API_BASE}/data`);
+        if (response.ok) {
+          const data = await response.json();
           if (data.config) setConfig(data.config);
           if (data.heroImages && data.heroImages.length > 0) setHeroImages(data.heroImages);
           if (data.news && data.news.length > 0) setNews(data.news);
@@ -1128,78 +1201,89 @@ export const AdminPanel = () => {
           if (data.pages && data.pages.length > 0) setPages(data.pages);
           if (data.downloads && data.downloads.length > 0) setDownloads(data.downloads);
           if (data.enrollments && data.enrollments.length > 0) setEnrollments(data.enrollments);
+          setLoading(false);
+          showToast('✅ Data geladen van lokale server!', 'success');
+          return;
         }
-      } catch (e) {
-        console.log('Geen opgeslagen data gevonden, gebruik mock data');
+      } catch (error) {
+        console.log('Lokale server niet beschikbaar');
       }
-      setLoading(false);
-      showToast('ℹ️ Gebruikt lokale data. Start de server voor volledige functionaliteit.', 'success');
-      return;
     }
-
-    try {
-      const response = await fetch(`${API_BASE}/data`);
-      if (!response.ok) {
-        throw new Error(`Server responded with ${response.status}`);
-      }
-      const data = await response.json();
-      if (data.config) setConfig(data.config);
-      if (data.heroImages && data.heroImages.length > 0) setHeroImages(data.heroImages);
-      if (data.news && data.news.length > 0) setNews(data.news);
-      if (data.events && data.events.length > 0) setEvents(data.events);
-      if (data.albums && data.albums.length > 0) setAlbums(data.albums);
-      if (data.team && data.team.length > 0) setTeam(data.team);
-      if (data.ouderwerkgroep && data.ouderwerkgroep.length > 0) setOuderwerkgroep(data.ouderwerkgroep);
-      if (data.submissions && data.submissions.length > 0) setSubmissions(data.submissions);
-      if (data.pages && data.pages.length > 0) setPages(data.pages);
-      if (data.downloads && data.downloads.length > 0) setDownloads(data.downloads);
-      if (data.enrollments && data.enrollments.length > 0) setEnrollments(data.enrollments);
-      setLoading(false);
-      showToast('✅ Data succesvol geladen!', 'success');
-    } catch (error) {
-      console.error('Error fetching data:', error);
-      // Keep mock data as fallback
-      showToast('⚠️ Server niet bereikbaar. Gebruikt mock data. Start de server met: npm run server', 'error');
-      setLoading(false);
-    }
+    
+    setLoading(false);
+    showToast('ℹ️ Gebruikt standaard data. Foto uploads werken via Cloudinary!', 'success');
   };
 
-  // Functie om alle data naar localStorage te synchroniseren (altijd, als backup)
-  const syncToLocalStorage = () => {
+  // State voor save status
+  const [isSaving, setIsSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Functie om alle data op te slaan (localStorage + GitHub indien beschikbaar)
+  const syncData = async () => {
+    const dataToSave = {
+      config,
+      heroImages,
+      news,
+      events,
+      albums,
+      team,
+      ouderwerkgroep,
+      submissions,
+      pages,
+      downloads,
+      enrollments
+    };
+    
+    setIsSaving(true);
+    
     try {
-      const dataToSave = {
-        config,
-        heroImages,
-        news,
-        events,
-        albums,
-        team,
-        ouderwerkgroep,
-        submissions,
-        pages,
-        downloads,
-        enrollments
-      };
+      // Altijd eerst naar localStorage (snel)
       localStorage.setItem('adminData', JSON.stringify(dataToSave));
-      // Dispatch custom event zodat App.tsx kan luisteren
       window.dispatchEvent(new CustomEvent('adminDataUpdated'));
-      if (!API_BASE) {
-        console.log('💾 Data opgeslagen naar localStorage en event gedispatched');
+      
+      // Als GitHub token beschikbaar is, ook naar GitHub pushen
+      if (isGitHubAvailable()) {
+        await saveDataToGitHub(dataToSave);
+        console.log('💾 Data opgeslagen naar GitHub!');
+      } else {
+        console.log('💾 Data opgeslagen naar localStorage');
       }
+      
+      setLastSaved(new Date());
     } catch (error) {
-      console.error('❌ Fout bij opslaan naar localStorage:', error);
+      console.error('❌ Fout bij opslaan:', error);
+    } finally {
+      setIsSaving(false);
     }
   };
+  
+  // Debounced save - wacht 2 seconden na laatste wijziging
+  const debouncedSave = () => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    saveTimeoutRef.current = setTimeout(() => {
+      syncData();
+    }, 2000);
+  };
+  
+  // Alias voor backward compatibility
+  const syncToLocalStorage = () => {
+    // Trigger immediate save (niet debounced) voor expliciete save calls
+    syncData();
+  };
 
-  // Sync naar localStorage wanneer data wijzigt (altijd als backup, vooral belangrijk zonder backend)
+  // Sync data wanneer iets wijzigt (debounced)
   useEffect(() => {
     if (isAuthenticated) {
-      // Gebruik een kleine delay om te voorkomen dat we te vaak syncen
-      const timeoutId = setTimeout(() => {
-        syncToLocalStorage();
-      }, 100);
-      return () => clearTimeout(timeoutId);
+      debouncedSave();
     }
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
   }, [news, events, albums, team, ouderwerkgroep, pages, downloads, enrollments, config, heroImages, submissions, isAuthenticated]);
 
   useEffect(() => {
@@ -1757,7 +1841,7 @@ export const AdminPanel = () => {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && (password === 'admin' ? setIsAuthenticated(true) : showToast('Fout wachtwoord!', 'error'))}
+            onKeyDown={(e) => e.key === 'Enter' && (password === ADMIN_PASSWORD ? setIsAuthenticated(true) : showToast('Fout wachtwoord!', 'error'))}
             className="w-full p-3 md:p-4 text-lg border-2 border-gray-200 rounded-xl mb-4 focus:border-emerald-500 focus:outline-none transition"
             placeholder="Wachtwoord..."
           />
@@ -1766,7 +1850,7 @@ export const AdminPanel = () => {
             color="green"
             size="lg"
             className="w-full"
-            onClick={() => password === 'admin' ? setIsAuthenticated(true) : showToast('Fout wachtwoord! (hint: admin)', 'error')}
+            onClick={() => password === ADMIN_PASSWORD ? setIsAuthenticated(true) : showToast('Fout wachtwoord!', 'error')}
             icon={<ChevronRight size={24} />}
           >
             Inloggen
@@ -1874,9 +1958,36 @@ export const AdminPanel = () => {
         {/* Dashboard */}
         {activeTab === 'dashboard' && (
           <div className="space-y-6 md:space-y-8 animate-fade-in">
-            <div>
-              <h2 className="text-2xl md:text-4xl font-bold text-gray-800 mb-2">Goedendag! 👋</h2>
-              <p className="text-gray-500 text-base md:text-lg">Hier is een overzicht van je school website</p>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <h2 className="text-2xl md:text-4xl font-bold text-gray-800 mb-2">Goedendag! 👋</h2>
+                <p className="text-gray-500 text-base md:text-lg">Hier is een overzicht van je school website</p>
+              </div>
+              
+              {/* Save Status Indicator */}
+              <div className="flex items-center gap-3 bg-white rounded-xl px-4 py-3 shadow-sm border border-gray-100">
+                {isSaving ? (
+                  <>
+                    <Loader2 size={20} className="text-emerald-500 animate-spin" />
+                    <span className="text-gray-600 font-medium">Opslaan...</span>
+                  </>
+                ) : lastSaved ? (
+                  <>
+                    <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                    <span className="text-gray-600 text-sm">
+                      Opgeslagen om {lastSaved.toLocaleTimeString('nl-BE', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                    {isGitHubAvailable() && (
+                      <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">GitHub</span>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <div className="w-2 h-2 rounded-full bg-gray-300"></div>
+                    <span className="text-gray-500 text-sm">Wijzigingen worden automatisch opgeslagen</span>
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Stats Grid */}

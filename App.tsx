@@ -7,6 +7,7 @@ import {
   MessageCircle, Send, Settings, FileText, Inbox, Loader2
 } from 'lucide-react';
 import { generateNewsContent, generateChatResponse } from './services/geminiService';
+import { fetchDataFromGitHub } from './services/dataService';
 import { MOCK_NEWS, MOCK_EVENTS, MOCK_ALBUMS, MOCK_TEAM, DEFAULT_CONFIG, MOCK_SUBMISSIONS, INITIAL_CHAT_MESSAGES, HERO_IMAGES } from './constants';
 import { NewsItem, CalendarEvent, PhotoAlbum, PageView, Teacher, SiteConfig, FormSubmission, ChatMessage, Enrollment } from './types';
 import { HeroCarousel, ParentsPage, GalleryPage } from './NewComponents';
@@ -2397,6 +2398,23 @@ function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [largeText, setLargeText] = useState(false);
   const [loading, setLoading] = useState(true);
+  
+  // Check URL hash for admin route
+  useEffect(() => {
+    const checkHash = () => {
+      const hash = window.location.hash;
+      if (hash === '#/admin' || hash === '#admin') {
+        setPage('admin');
+      }
+    };
+    
+    // Check on mount
+    checkHash();
+    
+    // Listen for hash changes
+    window.addEventListener('hashchange', checkHash);
+    return () => window.removeEventListener('hashchange', checkHash);
+  }, []);
 
   // Central State - fetched from API
   const [config, setConfig] = useState<SiteConfig>(DEFAULT_CONFIG);
@@ -2435,64 +2453,63 @@ function App() {
     return false; // Geen data gevonden
   };
 
-  // Fetch data from API on mount
+  // Fetch data from GitHub/API on mount
   useEffect(() => {
     const fetchData = async () => {
-      // Als we geen API_BASE hebben (productie), gebruik localStorage of mock data
-      if (!API_BASE) {
-        console.log('Productie modus: gebruik localStorage of mock data');
-        const dataLoaded = loadDataFromLocalStorage();
-        if (!dataLoaded) {
-          // Fallback naar pages uit localStorage (oude methode)
-          const savedPages = localStorage.getItem('pages');
-          if (savedPages) {
-            try {
-              setPages(JSON.parse(savedPages));
-            } catch (e) {}
-          }
-        }
+      // STAP 1: Probeer eerst data van GitHub te laden (werkt altijd)
+      console.log('🔄 Data laden van GitHub...');
+      const githubData = await fetchDataFromGitHub();
+      
+      if (githubData) {
+        console.log('✅ Data geladen van GitHub!');
+        if (githubData.config) setConfig(githubData.config);
+        if (githubData.heroImages && githubData.heroImages.length > 0) setHeroImages(githubData.heroImages);
+        if (githubData.news && githubData.news.length > 0) setNews(githubData.news);
+        if (githubData.events && githubData.events.length > 0) setEvents(githubData.events);
+        if (githubData.albums && githubData.albums.length > 0) setAlbums(githubData.albums);
+        if (githubData.team && githubData.team.length > 0) setTeam(githubData.team);
+        if (githubData.ouderwerkgroep && githubData.ouderwerkgroep.length > 0) setOuderwerkgroepActivities(githubData.ouderwerkgroep);
+        if (githubData.pages && githubData.pages.length > 0) setPages(githubData.pages);
+        if (githubData.downloads && githubData.downloads.length > 0) setDownloads(githubData.downloads);
+        if (githubData.enrollments && githubData.enrollments.length > 0) setEnrollments(githubData.enrollments);
+        // Cache in localStorage
+        try {
+          localStorage.setItem('adminData', JSON.stringify(githubData));
+        } catch (e) {}
         setLoading(false);
         return;
       }
-
-      try {
-        const response = await fetch(`${API_BASE}/data`);
-        if (response.ok) {
-          const data = await response.json();
-          if (data.config) setConfig(data.config);
-          if (data.heroImages) setHeroImages(data.heroImages);
-          if (data.news) setNews(data.news);
-          if (data.events) setEvents(data.events);
-          if (data.team) setTeam(data.team);
-          if (data.albums) setAlbums(data.albums);
-          if (data.submissions) setSubmissions(data.submissions);
-          if (data.pages) setPages(data.pages);
-          if (data.ouderwerkgroep) setOuderwerkgroepActivities(data.ouderwerkgroep);
-          if (data.downloads) setDownloads(data.downloads);
-          if (data.enrollments) setEnrollments(data.enrollments);
-          // Sla ook op in localStorage als backup
-          try {
-            localStorage.setItem('adminData', JSON.stringify(data));
-          } catch (e) {
-            console.log('Kon niet opslaan in localStorage:', e);
-          }
-        } else {
-          // API response niet OK, gebruik localStorage
-          console.log('Backend response niet OK, gebruik localStorage');
-          loadDataFromLocalStorage();
-        }
-      } catch (error) {
-        console.log('Backend niet beschikbaar, gebruik localStorage of mock data');
-        // Probeer localStorage als fallback
-        loadDataFromLocalStorage();
-      }
-      // Try to load pages from localStorage as fallback (oude methode voor compatibiliteit)
-      const savedPages = localStorage.getItem('pages');
-      if (savedPages) {
+      
+      // STAP 2: Fallback naar localStorage
+      console.log('⚠️ GitHub niet beschikbaar, probeer localStorage...');
+      const dataLoaded = loadDataFromLocalStorage();
+      
+      // STAP 3: Als lokale backend beschikbaar is, probeer die
+      if (API_BASE) {
         try {
-          setPages(JSON.parse(savedPages));
-        } catch (e) {}
+          const response = await fetch(`${API_BASE}/data`);
+          if (response.ok) {
+            const data = await response.json();
+            if (data.config) setConfig(data.config);
+            if (data.heroImages) setHeroImages(data.heroImages);
+            if (data.news) setNews(data.news);
+            if (data.events) setEvents(data.events);
+            if (data.team) setTeam(data.team);
+            if (data.albums) setAlbums(data.albums);
+            if (data.submissions) setSubmissions(data.submissions);
+            if (data.pages) setPages(data.pages);
+            if (data.ouderwerkgroep) setOuderwerkgroepActivities(data.ouderwerkgroep);
+            if (data.downloads) setDownloads(data.downloads);
+            if (data.enrollments) setEnrollments(data.enrollments);
+            try {
+              localStorage.setItem('adminData', JSON.stringify(data));
+            } catch (e) {}
+          }
+        } catch (error) {
+          console.log('Lokale backend niet beschikbaar');
+        }
       }
+      
       setLoading(false);
     };
     fetchData();
