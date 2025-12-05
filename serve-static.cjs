@@ -25,9 +25,18 @@ const mimeTypes = {
 const server = http.createServer((req, res) => {
   let url = req.url;
   
-  // Default to index.html
+  // Redirect root to pages/index.html
   if (url === '/' || url === '') {
-    url = '/index.html';
+    res.writeHead(302, { 'Location': '/pages/index.html' });
+    res.end();
+    return;
+  }
+  
+  // Default to index.html for other root paths
+  if (url === '/index.html' && !url.startsWith('/pages/')) {
+    res.writeHead(302, { 'Location': '/pages/index.html' });
+    res.end();
+    return;
   }
   
   // Add .html extension if no extension
@@ -37,15 +46,27 @@ const server = http.createServer((req, res) => {
   
   let filePath;
   
+  // Check if it's a pages request
+  if (url.startsWith('/pages/')) {
+    filePath = path.join(__dirname, url.substring(1)); // Remove leading /
+  }
   // Check if it's a static page request
-  if (url.endsWith('.html')) {
+  else if (url.endsWith('.html')) {
     filePath = path.join(__dirname, 'static', url);
   }
-  // CSS files
+  // CSS files from pages
+  else if (url.startsWith('/pages/css/')) {
+    filePath = path.join(__dirname, url.substring(1));
+  }
+  // CSS files from static
   else if (url.startsWith('/css/')) {
     filePath = path.join(__dirname, 'static', url);
   }
-  // JS files
+  // JS files from pages
+  else if (url.startsWith('/pages/js/')) {
+    filePath = path.join(__dirname, url.substring(1));
+  }
+  // JS files from static
   else if (url.startsWith('/js/')) {
     filePath = path.join(__dirname, 'static', url);
   }
