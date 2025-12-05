@@ -1,30 +1,21 @@
 {
-  "buildCommand": "npm run build",
-  "outputDirectory": "dist",
+  "public": true,
   "rewrites": [
     {
       "source": "/",
       "destination": "/pages/index.html"
     },
     {
-      "source": "/pages/:path*",
-      "destination": "/pages/:path*"
+      "source": "/pages/(.*)",
+      "destination": "/pages/$1"
     },
     {
-      "source": "/images/:path*",
-      "destination": "/public/images/:path*"
+      "source": "/images/(.*)",
+      "destination": "/public/images/$1"
     },
     {
-      "source": "/documents/:path*",
-      "destination": "/public/documents/:path*"
-    },
-    {
-      "source": "/css/:path*",
-      "destination": "/pages/css/:path*"
-    },
-    {
-      "source": "/js/:path*",
-      "destination": "/pages/js/:path*"
+      "source": "/documents/(.*)",
+      "destination": "/public/documents/$1"
     }
   ],
   "headers": [
