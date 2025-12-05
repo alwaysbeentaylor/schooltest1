@@ -14,6 +14,7 @@
     "static:3005": "cross-env PORT=3005 node serve-static.cjs",
     "dev:all": "concurrently \"npm run dev\" \"npm run server\"",
     "build": "vite build",
+    "build:static": "echo 'Static files are already in place'",
     "preview": "vite preview"
   },
   "dependencies": {
