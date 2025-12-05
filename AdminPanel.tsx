@@ -1107,6 +1107,7 @@ export const AdminPanel = () => {
   const [news, setNews] = useState<NewsItem[]>(MOCK_NEWS);
   const [events, setEvents] = useState<CalendarEvent[]>(MOCK_EVENTS);
   const [albums, setAlbums] = useState<PhotoAlbum[]>(MOCK_ALBUMS);
+  const [expandedAlbumId, setExpandedAlbumId] = useState<string | null>(null);
   const [team, setTeam] = useState<TeamMember[]>(MOCK_TEAM as TeamMember[]);
   const [ouderwerkgroep, setOuderwerkgroep] = useState<OuderwerkgroepActivity[]>([]);
   const [submissions, setSubmissions] = useState<FormSubmission[]>(MOCK_SUBMISSIONS);
@@ -1628,6 +1629,46 @@ export const AdminPanel = () => {
     }
   };
 
+  const handleDeleteImageFromAlbum = async (albumId: string, imageIndex: number) => {
+    if (!confirm('Weet je zeker dat je deze foto wilt verwijderen?')) return;
+    
+    try {
+      // Use Vercel API endpoint
+      const apiUrl = API_BASE 
+        ? `${API_BASE}/albums/${albumId}/images/${imageIndex}` 
+        : `/api/albums?albumId=${albumId}&imageIndex=${imageIndex}`;
+      
+      const response = await fetch(apiUrl, { method: 'DELETE' });
+      
+      if (response.ok) {
+        // Update local state
+        const updatedAlbums = albums.map(album => {
+          if (album.id === albumId) {
+            const newImages = [...album.images];
+            newImages.splice(imageIndex, 1);
+            return {
+              ...album,
+              images: newImages,
+              coverImage: newImages.length > 0 && album.coverImage === album.images[imageIndex] 
+                ? newImages[0] 
+                : album.coverImage
+            };
+          }
+          return album;
+        });
+        setAlbums(updatedAlbums);
+        syncToLocalStorage();
+        showToast('Foto verwijderd!', 'success');
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        showToast(`Fout: ${errorData.error || 'Onbekende fout'}`, 'error');
+      }
+    } catch (error) {
+      console.error('Delete image error:', error);
+      showToast('Fout bij verwijderen foto', 'error');
+    }
+  };
+
   const handleAddTeamMember = async () => {
     try {
       const response = await fetch(`${API_BASE}/team`, {
@@ -1707,6 +1748,27 @@ export const AdminPanel = () => {
     }
   };
 
+  // Upload document to Cloudinary
+  const uploadDocumentToCloudinary = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', CLOUDINARY_UPLOAD_PRESET);
+    formData.append('folder', 'school-documents');
+    
+    const response = await fetch(
+      `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/auto/upload`,
+      { method: 'POST', body: formData }
+    );
+    
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Cloudinary upload failed: ${error}`);
+    }
+    
+    const data = await response.json();
+    return data.secure_url;
+  };
+
   // Download handlers
   const handleAddDownload = async () => {
     if (!downloadForm.file || !downloadForm.title) {
@@ -1714,43 +1776,38 @@ export const AdminPanel = () => {
       return;
     }
     
-    // Als geen backend, gebruik lokale state met object URL
-    if (!API_BASE) {
-      const objectUrl = URL.createObjectURL(downloadForm.file);
-      const newDownload = {
-        id: Date.now().toString(),
-        title: downloadForm.title,
-        filename: objectUrl,
-        uploadDate: new Date().toISOString()
-      };
-      const updatedDownloads = [...downloads, newDownload];
-      setDownloads(updatedDownloads);
-      setShowDownloadModal(false);
-      setDownloadForm({ title: '', file: null });
-      syncToLocalStorage();
-      showToast('Document toegevoegd! 📄 (lokaal opgeslagen)', 'success');
-      return;
-    }
-    
-    const formData = new FormData();
-    formData.append('document', downloadForm.file);
-    formData.append('title', downloadForm.title);
-    
     try {
-      const response = await fetch(`${API_BASE}/downloads`, {
+      // Upload to Cloudinary first
+      showToast('Document uploaden naar Cloudinary...', 'success');
+      const cloudinaryUrl = await uploadDocumentToCloudinary(downloadForm.file);
+      
+      // Save to KV via API
+      const apiUrl = API_BASE ? `${API_BASE}/downloads` : '/api/downloads';
+      const response = await fetch(apiUrl, {
         method: 'POST',
-        body: formData
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: downloadForm.title,
+          fileUrl: cloudinaryUrl,
+          originalName: downloadForm.file.name
+        })
       });
+      
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
-          setDownloads([...downloads, data.item]);
+          setDownloads([data.item, ...downloads]);
           setShowDownloadModal(false);
           setDownloadForm({ title: '', file: null });
+          syncToLocalStorage();
           showToast('Document toegevoegd! 📄', 'success');
         }
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        showToast(`Fout: ${errorData.error || 'Onbekende fout'}`, 'error');
       }
     } catch (error) {
+      console.error('Upload error:', error);
       showToast('Fout bij uploaden document', 'error');
     }
   };
@@ -1758,22 +1815,21 @@ export const AdminPanel = () => {
   const handleDeleteDownload = async (id: string) => {
     if (!confirm('Weet je zeker dat je dit document wilt verwijderen?')) return;
     
-    // Als geen backend, gebruik lokale state
-    if (!API_BASE) {
-      const updatedDownloads = downloads.filter(d => d.id !== id);
-      setDownloads(updatedDownloads);
-      syncToLocalStorage();
-      showToast('Document verwijderd! 🗑️ (lokaal)', 'success');
-      return;
-    }
-
     try {
-      const response = await fetch(`${API_BASE}/downloads/${id}`, { method: 'DELETE' });
+      // Use Vercel API endpoint
+      const apiUrl = API_BASE ? `${API_BASE}/downloads/${id}` : `/api/downloads?id=${id}`;
+      const response = await fetch(apiUrl, { method: 'DELETE' });
+      
       if (response.ok) {
         setDownloads(downloads.filter(d => d.id !== id));
+        syncToLocalStorage();
         showToast('Document verwijderd! 🗑️', 'success');
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        showToast(`Fout: ${errorData.error || 'Onbekende fout'}`, 'error');
       }
     } catch (error) {
+      console.error('Delete download error:', error);
       showToast('Fout bij verwijderen', 'error');
     }
   };
@@ -2074,12 +2130,20 @@ export const AdminPanel = () => {
             onDelete={async (id) => {
               if (!confirm('Weet je zeker dat je deze inschrijving wilt verwijderen?')) return;
               try {
-                const response = await fetch(`${API_BASE}/enrollments/${id}`, { method: 'DELETE' });
+                // Use Vercel API endpoint (works in production)
+                const apiUrl = API_BASE ? `${API_BASE}/enrollments/${id}` : `/api/enrollments?id=${id}`;
+                const response = await fetch(apiUrl, { method: 'DELETE' });
                 if (response.ok) {
                   setEnrollments(enrollments.filter(e => e.id !== id));
+                  // Sync to KV
+                  syncToLocalStorage();
                   showToast('Inschrijving verwijderd!', 'success');
+                } else {
+                  const errorData = await response.json().catch(() => ({}));
+                  showToast(`Fout: ${errorData.error || 'Onbekende fout'}`, 'error');
                 }
               } catch (error) {
+                console.error('Delete enrollment error:', error);
                 showToast('Fout bij verwijderen', 'error');
               }
             }}
@@ -2180,6 +2244,41 @@ export const AdminPanel = () => {
                     </label>
                   </div>
 
+                  {/* Foto's beheren knop */}
+                  {album.images.length > 0 && (
+                    <button
+                      onClick={() => setExpandedAlbumId(expandedAlbumId === album.id ? null : album.id)}
+                      className="w-full mb-4 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg text-sm font-medium hover:bg-blue-200 transition flex items-center justify-center gap-2"
+                    >
+                      <ImageIcon size={16} />
+                      {expandedAlbumId === album.id ? 'Foto\'s verbergen' : 'Foto\'s beheren'}
+                    </button>
+                  )}
+
+                  {/* Uitgeklapte foto lijst */}
+                  {expandedAlbumId === album.id && album.images.length > 0 && (
+                    <div className="mb-4 p-4 bg-gray-50 rounded-xl max-h-64 overflow-y-auto">
+                      <div className="grid grid-cols-3 gap-2">
+                        {album.images.map((imageUrl, index) => (
+                          <div key={index} className="relative group">
+                            <img 
+                              src={imageUrl} 
+                              alt={`Foto ${index + 1}`}
+                              className="w-full h-20 object-cover rounded-lg"
+                            />
+                            <button
+                              onClick={() => handleDeleteImageFromAlbum(album.id, index)}
+                              className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition"
+                              title="Foto verwijderen"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="flex justify-between items-center">
                     <span className="text-xs text-gray-400">{album.createdDate}</span>
                     <button onClick={() => handleDeleteAlbum(album.id)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition">
@@ -2220,12 +2319,14 @@ export const AdminPanel = () => {
                   </div>
                   <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-100">
                     <a 
-                      href={`/documents/${download.filename}`} 
+                      href={download.filename?.startsWith('http') 
+                        ? download.filename 
+                        : `/api/downloads?download=true&id=${download.id}`} 
                       target="_blank" 
                       rel="noreferrer"
                       className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
                     >
-                      <ExternalLink size={14} /> Bekijken
+                      <ExternalLink size={14} /> Downloaden
                     </a>
                     <button 
                       onClick={() => handleDeleteDownload(download.id)} 

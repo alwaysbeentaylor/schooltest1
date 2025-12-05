@@ -46,7 +46,7 @@ async function saveData(data: any) {
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 
   if (req.method === 'OPTIONS') {
@@ -62,74 +62,61 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    if (req.method === 'GET') {
-      // Get all enrollments
-      const data = await getData();
-      if (!data) {
-        return res.status(200).json({ enrollments: [] });
-      }
-      return res.status(200).json({ enrollments: data.enrollments || [] });
-    }
-
-    if (req.method === 'POST') {
-      // Add new enrollment
-      const enrollment = req.body;
-      
-      // Get current data
-      const data = await getData();
-      
-      // Initialize enrollments array if it doesn't exist
-      if (!data.enrollments) {
-        data.enrollments = [];
-      }
-      
-      // Add new enrollment to the beginning of the array
-      data.enrollments.unshift(enrollment);
-      
-      // Save back to KV
-      await saveData(data);
-      
-      return res.status(200).json({ 
-        success: true, 
-        item: enrollment,
-        message: 'Inschrijving opgeslagen!' 
-      });
-    }
-
     if (req.method === 'DELETE') {
-      // Delete enrollment by ID
-      const { id } = req.query;
+      // Delete image from album
+      const { albumId, imageIndex } = req.query;
       
-      if (!id || typeof id !== 'string') {
-        return res.status(400).json({ error: 'Enrollment ID is required' });
+      if (!albumId || typeof albumId !== 'string') {
+        return res.status(400).json({ error: 'Album ID is required' });
+      }
+      
+      if (imageIndex === undefined || imageIndex === null) {
+        return res.status(400).json({ error: 'Image index is required' });
+      }
+      
+      const index = parseInt(imageIndex as string);
+      if (isNaN(index)) {
+        return res.status(400).json({ error: 'Invalid image index' });
       }
       
       // Get current data
       const data = await getData();
-      if (!data || !data.enrollments) {
-        return res.status(404).json({ error: 'Geen inschrijvingen gevonden' });
+      if (!data || !data.albums) {
+        return res.status(404).json({ error: 'Geen albums gevonden' });
       }
       
-      // Find and remove enrollment
-      const index = data.enrollments.findIndex((e: any) => e.id === id);
-      if (index === -1) {
-        return res.status(404).json({ error: 'Inschrijving niet gevonden' });
+      // Find album
+      const album = data.albums.find((a: any) => a.id === albumId);
+      if (!album) {
+        return res.status(404).json({ error: 'Album niet gevonden' });
       }
       
-      data.enrollments.splice(index, 1);
+      // Check if image index is valid
+      if (index < 0 || index >= album.images.length) {
+        return res.status(404).json({ error: 'Foto niet gevonden in album' });
+      }
+      
+      // Remove image from array
+      album.images.splice(index, 1);
+      
+      // Update cover image if it was the deleted one
+      if (album.coverImage === album.images[index] || (album.images.length > 0 && album.coverImage && !album.images.includes(album.coverImage))) {
+        album.coverImage = album.images.length > 0 ? album.images[0] : null;
+      }
       
       // Save back to KV
       await saveData(data);
       
       return res.status(200).json({ 
         success: true, 
-        message: 'Inschrijving verwijderd!' 
+        message: 'Foto verwijderd!',
+        album: album
       });
     }
 
     return res.status(405).json({ error: 'Method not allowed' });
   } catch (error) {
-    console.error('Enrollment API Error:', error);
+    console.error('Album API Error:', error);
     return res.status(500).json({ 
       error: 'Database error', 
       details: String(error)
