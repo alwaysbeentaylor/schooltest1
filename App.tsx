@@ -2370,9 +2370,26 @@ const InfoPage = ({ config, downloads }: { config: SiteConfig; downloads: Array<
 );
 
 // Detecteer of we lokaal of in productie draaien
-const API_BASE = window.location.hostname === 'localhost' 
-  ? 'http://localhost:3001/api' 
-  : ''; // Laat leeg voor productie - we gebruiken mock data
+// 1. Check environment variable (voor Vercel of andere deployments)
+// 2. Check of we lokaal draaien (localhost of 127.0.0.1)
+// 3. Anders: gebruik lege string (fallback naar mock data)
+const getApiBase = (): string => {
+  // Check voor environment variable (VITE_API_URL)
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  
+  // Check of we lokaal draaien
+  const hostname = window.location.hostname;
+  if (hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '') {
+    return 'http://localhost:3001/api';
+  }
+  
+  // Productie zonder backend - gebruik mock data
+  return '';
+};
+
+const API_BASE = getApiBase();
 
 // 4. ROOT COMPONENT
 function App() {
