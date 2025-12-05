@@ -162,10 +162,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const newDownload = {
         id: Date.now().toString(),
         title,
-        filename: fileUrl, // Store Cloudinary URL
+        filename: fileUrl, // Store Cloudinary URL (should be https://res.cloudinary.com/...)
         originalName: originalName || title,
         uploadDate: new Date().toISOString().split('T')[0]
       };
+      
+      console.log('Saving download:', newDownload);
       
       data.downloads.unshift(newDownload);
       
