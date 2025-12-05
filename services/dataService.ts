@@ -1,16 +1,6 @@
 // ============ DATA SERVICE ============
-// Handles data persistence via GitHub API for Vercel deployment
-// This allows admin changes to be saved permanently and visible on all devices
-
-const GITHUB_OWNER = 'alwaysbeentaylor';
-const GITHUB_REPO = 'schooltest1';
-const GITHUB_DATA_PATH = 'data/content.json';
-const GITHUB_BRANCH = 'main';
-
-// GitHub token should be set in Vercel environment variables
-const getGitHubToken = () => {
-  return import.meta.env.VITE_GITHUB_TOKEN || '';
-};
+// Handles data persistence via Vercel KV (Redis) for instant updates
+// No more waiting for rebuilds - changes are INSTANT!
 
 export interface SiteData {
   config: {
@@ -38,124 +28,86 @@ export interface SiteData {
   pages: any[];
 }
 
-// Fetch current data from GitHub
-export const fetchDataFromGitHub = async (): Promise<SiteData | null> => {
+// Get the API URL based on environment
+const getApiUrl = (): string => {
+  // In production, use relative URL (same domain)
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://localhost:3000/api/data';
+    }
+    // Production - use relative path
+    return '/api/data';
+  }
+  return '/api/data';
+};
+
+// Fetch data from Vercel KV via API
+export const fetchDataFromKV = async (): Promise<SiteData | null> => {
   try {
-    // Add cache-busting timestamp to URL to get fresh data
-    const timestamp = Date.now();
-    const rawUrl = `https://raw.githubusercontent.com/${GITHUB_OWNER}/${GITHUB_REPO}/${GITHUB_BRANCH}/${GITHUB_DATA_PATH}?t=${timestamp}`;
+    const apiUrl = getApiUrl();
+    console.log('🔄 Data laden van Vercel KV...');
     
-    const response = await fetch(rawUrl);
+    const response = await fetch(apiUrl, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
     
     if (response.ok) {
       const data = await response.json();
-      console.log('✅ Data geladen van GitHub');
+      console.log('✅ Data geladen van Vercel KV!');
       return data;
     }
     
-    console.warn('Could not fetch from raw URL');
+    console.warn('⚠️ KV response niet OK:', response.status);
     return null;
   } catch (error) {
-    console.error('Error fetching data from GitHub:', error);
+    console.error('❌ Error fetching from KV:', error);
     return null;
   }
 };
 
-// Get file SHA (needed for updates)
-const getFileSha = async (token: string): Promise<string | null> => {
+// Save data to Vercel KV via API
+export const saveDataToKV = async (data: SiteData): Promise<boolean> => {
   try {
-    const response = await fetch(
-      `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${GITHUB_DATA_PATH}?ref=${GITHUB_BRANCH}`,
-      {
-        headers: {
-          'Authorization': `token ${token}`,
-          'Accept': 'application/vnd.github.v3+json'
-        }
-      }
-    );
+    const apiUrl = getApiUrl();
+    console.log('💾 Data opslaan naar Vercel KV...');
+    
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    });
     
     if (response.ok) {
-      const data = await response.json();
-      return data.sha;
+      console.log('✅ Data opgeslagen naar Vercel KV!');
+      return true;
     }
-    return null;
+    
+    console.error('❌ KV save failed:', response.status);
+    return false;
   } catch (error) {
-    console.error('Error getting file SHA:', error);
-    return null;
+    console.error('❌ Error saving to KV:', error);
+    return false;
   }
 };
 
-// Save data to GitHub
-export const saveDataToGitHub = async (data: SiteData): Promise<boolean> => {
-  const token = getGitHubToken();
-  
-  if (!token) {
-    console.warn('⚠️ Geen GitHub token gevonden. Data wordt alleen lokaal opgeslagen.');
-    // Save to localStorage as fallback
-    localStorage.setItem('adminData', JSON.stringify(data));
-    window.dispatchEvent(new CustomEvent('adminDataUpdated'));
-    return true;
-  }
-  
+// Check if KV API is available
+export const isKVAvailable = async (): Promise<boolean> => {
   try {
-    // Get current file SHA
-    const sha = await getFileSha(token);
-    
-    if (!sha) {
-      console.error('Could not get file SHA');
-      // Fallback to localStorage
-      localStorage.setItem('adminData', JSON.stringify(data));
-      window.dispatchEvent(new CustomEvent('adminDataUpdated'));
-      return true;
-    }
-    
-    // Encode content as base64
-    const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
-    
-    // Update file via GitHub API
-    const response = await fetch(
-      `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/${GITHUB_DATA_PATH}`,
-      {
-        method: 'PUT',
-        headers: {
-          'Authorization': `token ${token}`,
-          'Accept': 'application/vnd.github.v3+json',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          message: `Admin update: ${new Date().toLocaleString('nl-BE')}`,
-          content: content,
-          sha: sha,
-          branch: GITHUB_BRANCH
-        })
-      }
-    );
-    
-    if (response.ok) {
-      console.log('✅ Data opgeslagen naar GitHub!');
-      // Also save to localStorage as backup
-      localStorage.setItem('adminData', JSON.stringify(data));
-      window.dispatchEvent(new CustomEvent('adminDataUpdated'));
-      return true;
-    } else {
-      const errorData = await response.json();
-      console.error('GitHub API error:', errorData);
-      // Fallback to localStorage
-      localStorage.setItem('adminData', JSON.stringify(data));
-      window.dispatchEvent(new CustomEvent('adminDataUpdated'));
-      return true;
-    }
-  } catch (error) {
-    console.error('Error saving to GitHub:', error);
-    // Fallback to localStorage
-    localStorage.setItem('adminData', JSON.stringify(data));
-    window.dispatchEvent(new CustomEvent('adminDataUpdated'));
-    return true;
+    const apiUrl = getApiUrl();
+    const response = await fetch(apiUrl, { method: 'GET' });
+    return response.ok;
+  } catch {
+    return false;
   }
 };
 
-// Check if GitHub integration is available
-export const isGitHubAvailable = (): boolean => {
-  return !!getGitHubToken();
-};
-
+// Legacy exports for backward compatibility
+export const fetchDataFromGitHub = fetchDataFromKV;
+export const saveDataToGitHub = saveDataToKV;
+export const isGitHubAvailable = (): boolean => true; // Always true now with KV

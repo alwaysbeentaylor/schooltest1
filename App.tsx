@@ -7,7 +7,7 @@ import {
   MessageCircle, Send, Settings, FileText, Inbox, Loader2
 } from 'lucide-react';
 import { generateNewsContent, generateChatResponse } from './services/geminiService';
-import { fetchDataFromGitHub } from './services/dataService';
+import { fetchDataFromKV } from './services/dataService';
 import { MOCK_NEWS, MOCK_EVENTS, MOCK_ALBUMS, MOCK_TEAM, DEFAULT_CONFIG, MOCK_SUBMISSIONS, INITIAL_CHAT_MESSAGES, HERO_IMAGES } from './constants';
 import { NewsItem, CalendarEvent, PhotoAlbum, PageView, Teacher, SiteConfig, FormSubmission, ChatMessage, Enrollment } from './types';
 import { HeroCarousel, ParentsPage, GalleryPage } from './NewComponents';
@@ -2457,31 +2457,31 @@ function App() {
   useEffect(() => {
     const fetchData = async () => {
       // STAP 1: Probeer eerst data van GitHub te laden (werkt altijd)
-      console.log('🔄 Data laden van GitHub...');
-      const githubData = await fetchDataFromGitHub();
+      console.log('🔄 Data laden van Vercel KV...');
+      const kvData = await fetchDataFromKV();
       
-      if (githubData) {
-        console.log('✅ Data geladen van GitHub!');
-        if (githubData.config) setConfig(githubData.config);
-        if (githubData.heroImages && githubData.heroImages.length > 0) setHeroImages(githubData.heroImages);
-        if (githubData.news && githubData.news.length > 0) setNews(githubData.news);
-        if (githubData.events && githubData.events.length > 0) setEvents(githubData.events);
-        if (githubData.albums && githubData.albums.length > 0) setAlbums(githubData.albums);
-        if (githubData.team && githubData.team.length > 0) setTeam(githubData.team);
-        if (githubData.ouderwerkgroep && githubData.ouderwerkgroep.length > 0) setOuderwerkgroepActivities(githubData.ouderwerkgroep);
-        if (githubData.pages && githubData.pages.length > 0) setPages(githubData.pages);
-        if (githubData.downloads && githubData.downloads.length > 0) setDownloads(githubData.downloads);
-        if (githubData.enrollments && githubData.enrollments.length > 0) setEnrollments(githubData.enrollments);
+      if (kvData) {
+        console.log('✅ Data geladen van Vercel KV!');
+        if (kvData.config) setConfig(kvData.config);
+        if (kvData.heroImages && kvData.heroImages.length > 0) setHeroImages(kvData.heroImages);
+        if (kvData.news && kvData.news.length > 0) setNews(kvData.news);
+        if (kvData.events && kvData.events.length > 0) setEvents(kvData.events);
+        if (kvData.albums && kvData.albums.length > 0) setAlbums(kvData.albums);
+        if (kvData.team && kvData.team.length > 0) setTeam(kvData.team);
+        if (kvData.ouderwerkgroep && kvData.ouderwerkgroep.length > 0) setOuderwerkgroepActivities(kvData.ouderwerkgroep);
+        if (kvData.pages && kvData.pages.length > 0) setPages(kvData.pages);
+        if (kvData.downloads && kvData.downloads.length > 0) setDownloads(kvData.downloads);
+        if (kvData.enrollments && kvData.enrollments.length > 0) setEnrollments(kvData.enrollments);
         // Cache in localStorage
         try {
-          localStorage.setItem('adminData', JSON.stringify(githubData));
+          localStorage.setItem('adminData', JSON.stringify(kvData));
         } catch (e) {}
         setLoading(false);
         return;
       }
       
       // STAP 2: Fallback naar localStorage
-      console.log('⚠️ GitHub niet beschikbaar, probeer localStorage...');
+      console.log('⚠️ Vercel KV niet beschikbaar, probeer localStorage...');
       const dataLoaded = loadDataFromLocalStorage();
       
       // STAP 3: Als lokale backend beschikbaar is, probeer die

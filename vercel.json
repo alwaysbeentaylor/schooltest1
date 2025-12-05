@@ -1,69 +1,18 @@
 {
   "rewrites": [
     {
-      "source": "/",
-      "destination": "/pages/index.html"
+      "source": "/api/:path*",
+      "destination": "/api/:path*"
     },
     {
-      "source": "/about.html",
-      "destination": "/pages/about.html"
-    },
-    {
-      "source": "/enroll.html",
-      "destination": "/pages/enroll.html"
-    },
-    {
-      "source": "/news.html",
-      "destination": "/pages/news.html"
-    },
-    {
-      "source": "/calendar.html",
-      "destination": "/pages/calendar.html"
-    },
-    {
-      "source": "/info.html",
-      "destination": "/pages/info.html"
-    },
-    {
-      "source": "/ouderwerkgroep.html",
-      "destination": "/pages/ouderwerkgroep.html"
-    },
-    {
-      "source": "/gallery.html",
-      "destination": "/pages/gallery.html"
-    },
-    {
-      "source": "/contact.html",
-      "destination": "/pages/contact.html"
-    },
-    {
-      "source": "/box.html",
-      "destination": "/pages/box.html"
-    },
-    {
-      "source": "/pages/(.*)",
-      "destination": "/pages/$1"
+      "source": "/((?!api/).*)",
+      "destination": "/index.html"
     }
   ],
-  "headers": [
-    {
-      "source": "/pages/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=3600"
-        }
-      ]
-    },
-    {
-      "source": "/images/(.*)",
-      "headers": [
-        {
-          "key": "Cache-Control",
-          "value": "public, max-age=31536000, immutable"
-        }
-      ]
+  "functions": {
+    "api/**/*.ts": {
+      "runtime": "@vercel/node@3"
     }
-  ]
+  }
 }
 

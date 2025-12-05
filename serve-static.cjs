@@ -2,7 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
 
 const mimeTypes = {
   '.html': 'text/html',
@@ -25,18 +25,9 @@ const mimeTypes = {
 const server = http.createServer((req, res) => {
   let url = req.url;
   
-  // Redirect root to pages/index.html
+  // Default to index.html
   if (url === '/' || url === '') {
-    res.writeHead(302, { 'Location': '/pages/index.html' });
-    res.end();
-    return;
-  }
-  
-  // Default to index.html for other root paths
-  if (url === '/index.html' && !url.startsWith('/pages/')) {
-    res.writeHead(302, { 'Location': '/pages/index.html' });
-    res.end();
-    return;
+    url = '/index.html';
   }
   
   // Add .html extension if no extension
@@ -46,27 +37,15 @@ const server = http.createServer((req, res) => {
   
   let filePath;
   
-  // Check if it's a pages request
-  if (url.startsWith('/pages/')) {
-    filePath = path.join(__dirname, url.substring(1)); // Remove leading /
-  }
   // Check if it's a static page request
-  else if (url.endsWith('.html')) {
+  if (url.endsWith('.html')) {
     filePath = path.join(__dirname, 'static', url);
   }
-  // CSS files from pages
-  else if (url.startsWith('/pages/css/')) {
-    filePath = path.join(__dirname, url.substring(1));
-  }
-  // CSS files from static
+  // CSS files
   else if (url.startsWith('/css/')) {
     filePath = path.join(__dirname, 'static', url);
   }
-  // JS files from pages
-  else if (url.startsWith('/pages/js/')) {
-    filePath = path.join(__dirname, url.substring(1));
-  }
-  // JS files from static
+  // JS files
   else if (url.startsWith('/js/')) {
     filePath = path.join(__dirname, 'static', url);
   }

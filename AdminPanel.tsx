@@ -9,7 +9,7 @@ import {
   User, Baby, Building2, Stethoscope, Languages, ChevronDown, ChevronUp, RefreshCw
 } from 'lucide-react';
 import { generateNewsContent } from './services/geminiService';
-import { fetchDataFromGitHub, saveDataToGitHub, isGitHubAvailable } from './services/dataService';
+import { fetchDataFromKV, saveDataToKV } from './services/dataService';
 import { MOCK_NEWS, MOCK_EVENTS, MOCK_ALBUMS, MOCK_TEAM, DEFAULT_CONFIG, MOCK_SUBMISSIONS, HERO_IMAGES } from './constants';
 
 // ============ CLOUDINARY CONFIGURATIE ============
@@ -1134,32 +1134,26 @@ export const AdminPanel = () => {
   const [downloadForm, setDownloadForm] = useState({ title: '', file: null as File | null });
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // Fetch all data - now with GitHub support!
+  // Fetch all data - now with Vercel KV (instant!)
   const fetchData = async () => {
     setLoading(true);
     
-    // STAP 1: Probeer data van GitHub te laden (werkt altijd, ook in productie)
-    const githubData = await fetchDataFromGitHub();
-    if (githubData) {
-      if (githubData.config) setConfig(githubData.config);
-      if (githubData.heroImages && githubData.heroImages.length > 0) setHeroImages(githubData.heroImages);
-      if (githubData.news && githubData.news.length > 0) setNews(githubData.news);
-      if (githubData.events && githubData.events.length > 0) setEvents(githubData.events);
-      if (githubData.albums && githubData.albums.length > 0) setAlbums(githubData.albums);
-      if (githubData.team && githubData.team.length > 0) setTeam(githubData.team);
-      if (githubData.ouderwerkgroep && githubData.ouderwerkgroep.length > 0) setOuderwerkgroep(githubData.ouderwerkgroep);
-      if (githubData.submissions && githubData.submissions.length > 0) setSubmissions(githubData.submissions);
-      if (githubData.pages && githubData.pages.length > 0) setPages(githubData.pages);
-      if (githubData.downloads && githubData.downloads.length > 0) setDownloads(githubData.downloads);
-      if (githubData.enrollments && githubData.enrollments.length > 0) setEnrollments(githubData.enrollments);
+    // STAP 1: Probeer data van Vercel KV te laden (INSTANT!)
+    const kvData = await fetchDataFromKV();
+    if (kvData) {
+      if (kvData.config) setConfig(kvData.config);
+      if (kvData.heroImages && kvData.heroImages.length > 0) setHeroImages(kvData.heroImages);
+      if (kvData.news && kvData.news.length > 0) setNews(kvData.news);
+      if (kvData.events && kvData.events.length > 0) setEvents(kvData.events);
+      if (kvData.albums && kvData.albums.length > 0) setAlbums(kvData.albums);
+      if (kvData.team && kvData.team.length > 0) setTeam(kvData.team);
+      if (kvData.ouderwerkgroep && kvData.ouderwerkgroep.length > 0) setOuderwerkgroep(kvData.ouderwerkgroep);
+      if (kvData.submissions && kvData.submissions.length > 0) setSubmissions(kvData.submissions);
+      if (kvData.pages && kvData.pages.length > 0) setPages(kvData.pages);
+      if (kvData.downloads && kvData.downloads.length > 0) setDownloads(kvData.downloads);
+      if (kvData.enrollments && kvData.enrollments.length > 0) setEnrollments(kvData.enrollments);
       setLoading(false);
-      
-      const hasGitHubToken = isGitHubAvailable();
-      if (hasGitHubToken) {
-        showToast('✅ Data geladen! Wijzigingen worden opgeslagen naar GitHub.', 'success');
-      } else {
-        showToast('✅ Data geladen! Wijzigingen worden lokaal opgeslagen.', 'success');
-      }
+      showToast('✅ Data geladen! Wijzigingen worden DIRECT opgeslagen.', 'success');
       return;
     }
     
@@ -1179,39 +1173,13 @@ export const AdminPanel = () => {
         if (data.pages && data.pages.length > 0) setPages(data.pages);
         if (data.downloads && data.downloads.length > 0) setDownloads(data.downloads);
         if (data.enrollments && data.enrollments.length > 0) setEnrollments(data.enrollments);
+        showToast('✅ Data geladen van lokale opslag.', 'success');
       }
     } catch (e) {
       console.log('Geen opgeslagen data gevonden, gebruik mock data');
     }
     
-    // STAP 3: Als we een lokale backend hebben, probeer die
-    if (API_BASE) {
-      try {
-        const response = await fetch(`${API_BASE}/data`);
-        if (response.ok) {
-          const data = await response.json();
-          if (data.config) setConfig(data.config);
-          if (data.heroImages && data.heroImages.length > 0) setHeroImages(data.heroImages);
-          if (data.news && data.news.length > 0) setNews(data.news);
-          if (data.events && data.events.length > 0) setEvents(data.events);
-          if (data.albums && data.albums.length > 0) setAlbums(data.albums);
-          if (data.team && data.team.length > 0) setTeam(data.team);
-          if (data.ouderwerkgroep && data.ouderwerkgroep.length > 0) setOuderwerkgroep(data.ouderwerkgroep);
-          if (data.submissions && data.submissions.length > 0) setSubmissions(data.submissions);
-          if (data.pages && data.pages.length > 0) setPages(data.pages);
-          if (data.downloads && data.downloads.length > 0) setDownloads(data.downloads);
-          if (data.enrollments && data.enrollments.length > 0) setEnrollments(data.enrollments);
-          setLoading(false);
-          showToast('✅ Data geladen van lokale server!', 'success');
-          return;
-        }
-      } catch (error) {
-        console.log('Lokale server niet beschikbaar');
-      }
-    }
-    
     setLoading(false);
-    showToast('ℹ️ Gebruikt standaard data. Foto uploads werken via Cloudinary!', 'success');
   };
 
   // State voor save status
@@ -1242,12 +1210,12 @@ export const AdminPanel = () => {
       localStorage.setItem('adminData', JSON.stringify(dataToSave));
       window.dispatchEvent(new CustomEvent('adminDataUpdated'));
       
-      // Als GitHub token beschikbaar is, ook naar GitHub pushen
-      if (isGitHubAvailable()) {
-        await saveDataToGitHub(dataToSave);
-        console.log('💾 Data opgeslagen naar GitHub!');
+      // Sla op naar Vercel KV (INSTANT!)
+      const saved = await saveDataToKV(dataToSave);
+      if (saved) {
+        console.log('💾 Data opgeslagen naar Vercel KV!');
       } else {
-        console.log('💾 Data opgeslagen naar localStorage');
+        console.log('💾 Data opgeslagen naar localStorage (KV niet beschikbaar)');
       }
       
       setLastSaved(new Date());
@@ -1977,9 +1945,7 @@ export const AdminPanel = () => {
                     <span className="text-gray-600 text-sm">
                       Opgeslagen om {lastSaved.toLocaleTimeString('nl-BE', { hour: '2-digit', minute: '2-digit' })}
                     </span>
-                    {isGitHubAvailable() && (
-                      <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">GitHub</span>
-                    )}
+                    <span className="text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">Vercel KV</span>
                   </>
                 ) : (
                   <>
