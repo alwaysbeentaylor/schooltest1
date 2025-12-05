@@ -2321,8 +2321,11 @@ export const AdminPanel = () => {
                     <a 
                       href={download.filename?.startsWith('http') 
                         ? download.filename 
+                        : download.filename?.startsWith('blob:')
+                        ? download.filename
                         : `/api/downloads?download=true&id=${download.id}`} 
                       target="_blank" 
+                      download={download.originalName || download.title}
                       rel="noreferrer"
                       className="text-blue-600 hover:text-blue-800 text-sm font-medium flex items-center gap-1"
                     >

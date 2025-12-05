@@ -2345,10 +2345,12 @@ const InfoPage = ({ config, downloads }: { config: SiteConfig; downloads: Array<
                 downloads.map(doc => (
                     <a 
                         key={doc.id}
-                        href={doc.filename?.startsWith('http') 
+                        href={doc.filename?.startsWith('http') || doc.filename?.startsWith('blob:')
                           ? doc.filename 
                           : `/api/downloads?download=true&id=${doc.id}`} 
-                        download
+                        download={doc.originalName || doc.title}
+                        target={doc.filename?.startsWith('http') ? '_blank' : undefined}
+                        rel={doc.filename?.startsWith('http') ? 'noreferrer' : undefined}
                         className="flex items-center gap-4 bg-white p-4 rounded-xl hover:shadow-md transition-shadow group"
                     >
                         <div className="bg-blue-100 p-3 rounded-lg group-hover:bg-blue-200 transition-colors">
