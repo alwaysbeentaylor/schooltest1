@@ -43,22 +43,6 @@
     {
       "source": "/pages/(.*)",
       "destination": "/pages/$1"
-    },
-    {
-      "source": "/css/(.*)",
-      "destination": "/pages/css/$1"
-    },
-    {
-      "source": "/js/(.*)",
-      "destination": "/pages/js/$1"
-    },
-    {
-      "source": "/images/(.*)",
-      "destination": "/public/images/$1"
-    },
-    {
-      "source": "/documents/(.*)",
-      "destination": "/public/documents/$1"
     }
   ],
   "headers": [

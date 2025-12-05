@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VBS Sint-Maarten Sijsele - Home</title>
+  <meta name="description" content="Vrije Basisschool Sint-Maarten in Sijsele. Een warme school waar elk kind centraal staat.">
+  <link rel="icon" type="image/png" href="/images/logo.png">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fredoka:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- Navigation wordt geladen via components.js -->
+  <div data-nav></div>
+
+  <main>
+    <!-- Hero Section -->
+    <section class="hero hero-carousel">
+      <img src="/images/hero/school-main.jpeg" alt="VBS Sint-Maarten" class="hero-image hero-slide active">
+      <img src="/images/hero/school-building.jpeg" alt="Schoolgebouw" class="hero-image hero-slide">
+      <img src="/images/hero/school-kids.jpeg" alt="Leerlingen" class="hero-image hero-slide">
+      
+      <div class="hero-overlay">
+        <div class="hero-content">
+          <div class="hero-badges">
+            <span class="hero-badge hero-badge-green">Warme school</span>
+            <span class="hero-badge hero-badge-orange">Sijsele</span>
+          </div>
+          <h2 class="hero-title">Samen groeien,<br>elk op zijn eigen ritme</h2>
+          <p class="hero-subtitle">Vrije Basisschool Sijsele</p>
+          <div class="hero-buttons">
+            <a href="enroll.html" class="btn btn-primary btn-lg">Ik wil inschrijven</a>
+            <a href="about.html" class="btn btn-secondary btn-lg">Ontdek onze visie</a>
+            <button onclick="alert('De virtuele rondleiding wordt gelanceerd in Q2 2026!')" class="btn btn-orange btn-lg">
+              🎥 Virtuele Tour
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Carousel Dots -->
+      <div class="hero-dots" style="position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%); display: flex; gap: 0.75rem; z-index: 20;">
+        <button class="hero-dot active" style="width: 2rem; height: 0.75rem; background: white; border: none; border-radius: 9999px; cursor: pointer; transition: all 0.3s;"></button>
+        <button class="hero-dot" style="width: 0.75rem; height: 0.75rem; background: rgba(255,255,255,0.5); border: none; border-radius: 9999px; cursor: pointer; transition: all 0.3s;"></button>
+        <button class="hero-dot" style="width: 0.75rem; height: 0.75rem; background: rgba(255,255,255,0.5); border: none; border-radius: 9999px; cursor: pointer; transition: all 0.3s;"></button>
+      </div>
+    </section>
+
+    <!-- Quick Links -->
+    <section class="quick-links">
+      <a href="calendar.html" class="quick-link bg-school-orange">
+        <div class="quick-link-icon">
+          <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+            <line x1="16" y1="2" x2="16" y2="6"></line>
+            <line x1="8" y1="2" x2="8" y2="6"></line>
+            <line x1="3" y1="10" x2="21" y2="10"></line>
+          </svg>
+        </div>
+        <div>
+          <h3>Kalender</h3>
+          <p>Bekijk vakanties en activiteiten</p>
+        </div>
+      </a>
+      <a href="https://order.hanssens.be/menu/O56/OUDE-VESTIGING" target="_blank" class="quick-link bg-school-green">
+        <div class="quick-link-icon">
+          <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+        </div>
+        <div>
+          <h3>Menu</h3>
+          <p>Warme maaltijden (Hanssens)</p>
+        </div>
+      </a>
+      <a href="box.html" class="quick-link bg-school-red">
+        <div class="quick-link-icon">
+          <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+          </svg>
+        </div>
+        <div>
+          <h3>Belevingsbox</h3>
+          <p>Vraag jouw gratis doos aan!</p>
+        </div>
+      </a>
+      <a href="ouderwerkgroep.html" class="quick-link bg-school-dark">
+        <div class="quick-link-icon">
+          <svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+        </div>
+        <div>
+          <h3>Ouderwerkgroep</h3>
+          <p>Doe mee en help mee!</p>
+        </div>
+      </a>
+    </section>
+
+    <!-- Latest News -->
+    <section class="section">
+      <div class="container">
+        <div class="section-header" style="display: flex; justify-content: space-between; align-items: flex-end;">
+          <div>
+            <h2 class="section-title">Laatste Nieuws</h2>
+            <p class="section-subtitle">Blijf op de hoogte van het leven op school</p>
+          </div>
+          <a href="news.html" class="text-school-red font-bold" style="display: flex; align-items: center; gap: 0.25rem;">
+            Alle berichten →
+          </a>
+        </div>
+        
+        <div class="news-grid">
+          <article class="news-card">
+            <div class="news-card-image">
+              <img src="/images/news/bibliotheek-13.jpeg" alt="Grootoudersfeest">
+              <span class="news-card-category">Kleuter</span>
+            </div>
+            <div class="news-card-body">
+              <div class="news-card-date">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                15 oktober 2023
+              </div>
+              <h3 class="news-card-title">Grootoudersfeest was een succes!</h3>
+              <p class="news-card-text">Wat hebben we genoten van de massale opkomst. De kleuters hebben hun beste beentje voorgezet. Bekijk zeker de foto's in het album.</p>
+              <a href="news.html" class="news-card-link">Lees meer</a>
+            </div>
+          </article>
+          
+          <article class="news-card">
+            <div class="news-card-image">
+              <img src="/images/news/bibliotheek-15.jpeg" alt="Inschrijvingen">
+              <span class="news-card-category">Algemeen</span>
+            </div>
+            <div class="news-card-body">
+              <div class="news-card-date">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                1 november 2023
+              </div>
+              <h3 class="news-card-title">Inschrijvingen schooljaar 2024-2025</h3>
+              <p class="news-card-text">De inschrijvingen starten binnenkort. Vergeet niet uw afspraak te maken voor een rondleiding.</p>
+              <a href="news.html" class="news-card-link">Lees meer</a>
+            </div>
+          </article>
+          
+          <article class="news-card">
+            <div class="news-card-image">
+              <img src="/images/news/bibliotheek-17.jpeg" alt="Herfstwandeling">
+              <span class="news-card-category">Lager</span>
+            </div>
+            <div class="news-card-body">
+              <div class="news-card-date">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                  <line x1="16" y1="2" x2="16" y2="6"></line>
+                  <line x1="8" y1="2" x2="8" y2="6"></line>
+                  <line x1="3" y1="10" x2="21" y2="10"></line>
+                </svg>
+                20 oktober 2023
+              </div>
+              <h3 class="news-card-title">Herfstwandeling L3 en L4</h3>
+              <p class="news-card-text">Met laarzen aan trokken we het bos in. We leerden over paddenstoelen en bladeren.</p>
+              <a href="news.html" class="news-card-link">Lees meer</a>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer wordt geladen via components.js -->
+  <div data-footer></div>
+
+  <!-- Accessibility Button wordt geladen via components.js -->
+  <div data-accessibility></div>
+
+  <!-- Laad eerst componenten, dan main.js -->
+  <script src="js/components.js"></script>
+  <script src="js/main.js"></script>
+  
+  <style>
+    .hero-slide {
+      opacity: 0;
+      transition: opacity 1s ease;
+    }
+    .hero-slide.active {
+      opacity: 1;
+    }
+    .hero-dot.active {
+      width: 2rem !important;
+      background: white !important;
+    }
+  </style>
+</body>
+</html>
+
